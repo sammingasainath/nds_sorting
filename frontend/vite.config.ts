@@ -15,6 +15,22 @@ export default defineConfig({
     include: ['plotly.js-dist']
   },
   build: {
+    // Reduce build strictness for Docker deployment
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
     commonjsOptions: {
       include: [/plotly\.js-dist/, /node_modules/],
     },

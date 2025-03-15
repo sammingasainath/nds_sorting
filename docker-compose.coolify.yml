@@ -25,12 +25,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+        - VITE_API_BASE_URL=${BACKEND_URL:-http://backend:8000}/api
     container_name: nds-sorting-frontend
     ports:
       - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
     environment:
+      - NODE_ENV=production
       - VITE_API_BASE_URL=${BACKEND_URL:-http://backend:8000}/api
     restart: unless-stopped
     networks:
