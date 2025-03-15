@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "deployment": {
     "type": "docker-compose",
-    "file": "docker-compose.coolify.yml",
+    "file": "docker-compose.simple.yml",
     "buildArgs": {},
     "env": {
       "GOOGLE_SEARCH_API_KEY": "${GOOGLE_SEARCH_API_KEY}",
