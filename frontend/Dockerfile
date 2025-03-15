@@ -23,6 +23,13 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Create a healthcheck script
+RUN echo '#!/bin/sh\nwget -q --spider http://localhost:80 || exit 1' > /healthcheck.sh && \
+    chmod +x /healthcheck.sh
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD [ "/healthcheck.sh" ]
+
 # Expose port 80
 EXPOSE 80
 

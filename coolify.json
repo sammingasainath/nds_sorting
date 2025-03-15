@@ -1,32 +1,22 @@
 {
   "version": "1.0.0",
-  "services": {
-    "backend": {
-      "type": "python",
-      "directory": "backend",
-      "buildCommand": "pip install -r requirements.txt",
-      "startCommand": "uvicorn main:app --host 0.0.0.0 --port 8000",
-      "port": 8000,
-      "env": {
-        "GOOGLE_SEARCH_API_KEY": "${GOOGLE_SEARCH_API_KEY}",
-        "GOOGLE_SEARCH_CX": "${GOOGLE_SEARCH_CX}"
-      },
-      "volumes": [
-        {
-          "source": "Scores with Names.csv",
-          "destination": "/app/Scores with Names.csv"
-        }
-      ]
+  "deployment": {
+    "type": "docker-compose",
+    "file": "docker-compose.coolify.yml",
+    "buildArgs": {},
+    "env": {
+      "GOOGLE_SEARCH_API_KEY": "${GOOGLE_SEARCH_API_KEY}",
+      "GOOGLE_SEARCH_CX": "${GOOGLE_SEARCH_CX}",
+      "BACKEND_URL": "${BACKEND_URL}",
+      "FRONTEND_PORT": "${FRONTEND_PORT}",
+      "BACKEND_PORT": "${BACKEND_PORT}"
     },
-    "frontend": {
-      "type": "nodejs",
-      "directory": "frontend",
-      "buildCommand": "npm ci && npm run build",
-      "startCommand": "npm run preview",
-      "port": 4173,
-      "env": {
-        "VITE_API_BASE_URL": "${BACKEND_URL}/api"
+    "volumes": [
+      {
+        "source": "Scores with Names.csv",
+        "destination": "/app/Scores with Names.csv"
       }
-    }
-  }
+    ]
+  },
+  "autoUpdate": true
 } 
