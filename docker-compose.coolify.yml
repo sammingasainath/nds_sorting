@@ -18,7 +18,7 @@ services:
     networks:
       - nds-network
     labels:
-      coolify.managed: "true"
+      "coolify.managed": "true"
 
   frontend:
     image: ${COOLIFY_REGISTRY_URL}/nds-sorting-frontend:${COOLIFY_TAG}
@@ -26,8 +26,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NODE_ENV=production
-        - VITE_API_BASE_URL=${BACKEND_URL:-http://backend:8000}/api
+        NODE_ENV: "production"
+        VITE_API_BASE_URL: "${BACKEND_URL:-http://backend:8000}/api"
     container_name: nds-sorting-frontend
     ports:
       - "${FRONTEND_PORT:-80}:80"
@@ -40,7 +40,7 @@ services:
     networks:
       - nds-network
     labels:
-      coolify.managed: "true"
+      "coolify.managed": "true"
 
 networks:
   nds-network:
