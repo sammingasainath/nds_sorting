@@ -9,12 +9,14 @@
       "GOOGLE_SEARCH_CX": "${GOOGLE_SEARCH_CX}",
       "BACKEND_URL": "${BACKEND_URL}",
       "FRONTEND_PORT": "3000",
-      "BACKEND_PORT": "9000"
+      "BACKEND_PORT": "9000",
+      "PWD": "/app"
     },
     "volumes": [
       {
-        "source": "Scores with Names.csv",
-        "destination": "/app/Scores with Names.csv"
+        "source": "./Scores with Names.csv",
+        "destination": "/app/Scores with Names.csv",
+        "type": "bind"
       }
     ]
   },
