@@ -2,7 +2,7 @@ version: '3'
 
 services:
   backend:
-    image: ${COOLIFY_REGISTRY_URL}/nds-sorting-backend:${COOLIFY_TAG}
+    image: "${COOLIFY_REGISTRY_URL}/nds-sorting-backend:${COOLIFY_TAG}"
     build: 
       context: ./backend
       dockerfile: Dockerfile
@@ -10,18 +10,20 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      - ./Scores with Names.csv:/app/Scores with Names.csv
+      - type: bind
+        source: ./Scores with Names.csv
+        target: /app/Scores with Names.csv
     environment:
-      - GOOGLE_SEARCH_API_KEY=${GOOGLE_SEARCH_API_KEY}
-      - GOOGLE_SEARCH_CX=${GOOGLE_SEARCH_CX}
+      GOOGLE_SEARCH_API_KEY: "${GOOGLE_SEARCH_API_KEY}"
+      GOOGLE_SEARCH_CX: "${GOOGLE_SEARCH_CX}"
     restart: unless-stopped
     networks:
       - nds-network
     labels:
-      "coolify.managed": "true"
+      coolify.managed: "true"
 
   frontend:
-    image: ${COOLIFY_REGISTRY_URL}/nds-sorting-frontend:${COOLIFY_TAG}
+    image: "${COOLIFY_REGISTRY_URL}/nds-sorting-frontend:${COOLIFY_TAG}"
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -34,13 +36,13 @@ services:
     depends_on:
       - backend
     environment:
-      - NODE_ENV=production
-      - VITE_API_BASE_URL=${BACKEND_URL:-http://backend:8000}/api
+      NODE_ENV: "production"
+      VITE_API_BASE_URL: "${BACKEND_URL:-http://backend:8000}/api"
     restart: unless-stopped
     networks:
       - nds-network
     labels:
-      "coolify.managed": "true"
+      coolify.managed: "true"
 
 networks:
   nds-network:
