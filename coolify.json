@@ -8,8 +8,8 @@
       "GOOGLE_SEARCH_API_KEY": "${GOOGLE_SEARCH_API_KEY}",
       "GOOGLE_SEARCH_CX": "${GOOGLE_SEARCH_CX}",
       "BACKEND_URL": "${BACKEND_URL}",
-      "FRONTEND_PORT": "3000",
-      "BACKEND_PORT": "9000",
+      "FRONTEND_PORT": "7001",
+      "BACKEND_PORT": "7000",
       "PWD": "/app"
     },
     "volumes": [
