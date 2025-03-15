@@ -51,22 +51,35 @@ class SearchResponse(BaseModel):
 
 # Get the path to the CSV file - check multiple possible locations
 def get_csv_path():
-    # Check if file exists in the current directory
-    if os.path.exists("Scores with Names.csv"):
-        return "Scores with Names.csv"
+    """
+    Get the path to the CSV file by checking multiple possible locations.
+    Also prints debug information about the file search.
+    """
+    possible_paths = [
+        "Scores with Names.csv",  # Current directory
+        "/app/Scores with Names.csv",  # Docker container root
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "Scores with Names.csv"),  # Parent directory
+        os.path.join(os.path.dirname(__file__), "Scores with Names.csv"),  # Same directory as script
+    ]
     
-    # Check if file exists in the parent directory
-    parent_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Scores with Names.csv")
-    if os.path.exists(parent_path):
-        return parent_path
+    # Debug: Print current directory and file existence
+    current_dir = os.getcwd()
+    print(f"Current directory: {current_dir}")
+    print(f"Files in current directory: {os.listdir(current_dir)}")
     
-    # Check if file exists in the app directory (for Docker)
-    app_path = os.path.join("/app", "Scores with Names.csv")
-    if os.path.exists(app_path):
-        return app_path
+    # Check each possible path
+    for path in possible_paths:
+        print(f"Checking path: {path}")
+        if os.path.exists(path):
+            print(f"CSV file found at: {path}")
+            return path
     
-    # Return the default path and let the handler deal with the error
-    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "Scores with Names.csv")
+    # If we get here, we couldn't find the file
+    print("CSV file not found in any of the expected locations")
+    print(f"Possible paths checked: {possible_paths}")
+    
+    # Return the first path as default, but it will likely fail
+    return possible_paths[0]
 
 @app.get("/api/colleges", response_model=CollegeData)
 async def get_colleges():

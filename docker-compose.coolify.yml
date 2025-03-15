@@ -7,9 +7,7 @@ services:
     ports:
       - "${BACKEND_PORT:-7000}:8000"
     volumes:
-      - type: bind
-        source: ${PWD}/Scores with Names.csv
-        target: /app/Scores with Names.csv
+      - ./Scores with Names.csv:/app/Scores with Names.csv
     environment:
       - GOOGLE_SEARCH_API_KEY=${GOOGLE_SEARCH_API_KEY}
       - GOOGLE_SEARCH_CX=${GOOGLE_SEARCH_CX}

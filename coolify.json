@@ -9,16 +9,8 @@
       "GOOGLE_SEARCH_CX": "${GOOGLE_SEARCH_CX}",
       "BACKEND_URL": "${BACKEND_URL}",
       "FRONTEND_PORT": "7001",
-      "BACKEND_PORT": "7000",
-      "PWD": "/app"
-    },
-    "volumes": [
-      {
-        "source": "./Scores with Names.csv",
-        "destination": "/app/Scores with Names.csv",
-        "type": "bind"
-      }
-    ]
+      "BACKEND_PORT": "7000"
+    }
   },
   "autoUpdate": true
 } 
