@@ -20,7 +20,7 @@ services:
     networks:
       - nds-network
     labels:
-      coolify.managed: "true"
+      - "coolify.managed=true"
 
   frontend:
     image: "${COOLIFY_REGISTRY_URL}/nds-sorting-frontend:${COOLIFY_TAG}"
@@ -42,7 +42,7 @@ services:
     networks:
       - nds-network
     labels:
-      coolify.managed: "true"
+      - "coolify.managed=true"
 
 networks:
   nds-network:
