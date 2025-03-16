@@ -55,7 +55,13 @@ def get_csv_path():
     Get the path to the CSV file by checking multiple possible locations.
     Also prints debug information about the file search.
     """
-    # First check if CSV_PATH environment variable is set
+    # First check if the file exists in the root directory
+    root_csv_path = "/app/Scores with Names.csv"
+    if os.path.exists(root_csv_path) and os.path.isfile(root_csv_path):
+        print(f"CSV file found in root directory: {root_csv_path}")
+        return root_csv_path
+    
+    # Check if CSV_PATH environment variable is set
     csv_path_env = os.getenv("CSV_PATH")
     if csv_path_env:
         print(f"CSV_PATH environment variable is set to: {csv_path_env}")
@@ -84,19 +90,22 @@ def get_csv_path():
         else:
             print(f"CSV file NOT found at environment variable path: {csv_path_env}")
     
-    possible_paths = [
-        "Scores with Names.csv",  # Current directory
-        "/app/data/Scores with Names.csv",  # New mounted directory
-        "/app/Scores with Names.csv",  # Docker container root
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "Scores with Names.csv"),  # Parent directory
-        os.path.join(os.path.dirname(__file__), "Scores with Names.csv"),  # Same directory as script
-        os.path.join(os.path.dirname(__file__), "sample.csv"),  # Fallback sample file
-    ]
-    
     # Debug: Print current directory and file existence
     current_dir = os.getcwd()
     print(f"Current directory: {current_dir}")
     print(f"Files in current directory: {os.listdir(current_dir)}")
+    
+    # Check for the CSV file in the current directory
+    current_dir_csv = os.path.join(current_dir, "Scores with Names.csv")
+    if os.path.exists(current_dir_csv) and os.path.isfile(current_dir_csv):
+        print(f"CSV file found in current directory: {current_dir_csv}")
+        return current_dir_csv
+    
+    # Check for sample.csv in the current directory
+    sample_csv = os.path.join(current_dir, "sample.csv")
+    if os.path.exists(sample_csv) and os.path.isfile(sample_csv):
+        print(f"Using sample CSV file in current directory: {sample_csv}")
+        return sample_csv
     
     # If /app/data exists, list its contents
     data_dir = "/app/data"
@@ -105,7 +114,7 @@ def get_csv_path():
         # Look for CSV files in the data directory
         try:
             files = os.listdir(data_dir)
-            csv_files = [f for f in files if f.endswith('.csv')]
+            csv_files = [f for f in files if f.endswith('.csv') and os.path.isfile(os.path.join(data_dir, f))]
             if csv_files:
                 # Use the first CSV file found
                 csv_file_path = os.path.join(data_dir, csv_files[0])
@@ -113,17 +122,6 @@ def get_csv_path():
                 return csv_file_path
         except Exception as e:
             print(f"Error listing data directory: {str(e)}")
-    
-    # Check each possible path
-    for path in possible_paths:
-        print(f"Checking path: {path}")
-        if os.path.exists(path):
-            print(f"CSV file found at: {path}")
-            return path
-    
-    # If we get here, we couldn't find the file
-    print("CSV file not found in any of the expected locations")
-    print(f"Possible paths checked: {possible_paths}")
     
     # Use the sample.csv file we created earlier
     sample_path = os.path.join(os.path.dirname(__file__), "sample.csv")
@@ -146,7 +144,7 @@ def get_csv_path():
     except Exception as e:
         print(f"Error creating fallback CSV: {str(e)}")
         # Return the first path as default, but it will likely fail
-        return possible_paths[0]
+        return "/app/Scores with Names.csv"
 
 @app.get("/api/colleges", response_model=CollegeData)
 async def get_colleges():
