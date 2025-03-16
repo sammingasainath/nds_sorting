@@ -45,8 +45,14 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       // Ensure environment variables are exposed
-      'process.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
-      __VITE_API_BASE_URL__: JSON.stringify(env.VITE_API_BASE_URL),
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL),
+      'import.meta.env': JSON.stringify({
+        ...env,
+        VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL,
+        DEV: mode === 'development',
+        PROD: mode === 'production',
+        SSR: false
+      })
     },
   }
 })

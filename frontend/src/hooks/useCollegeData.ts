@@ -5,22 +5,53 @@ import { nonDominatedSort } from '@/utils/sorting';
 
 // Debug all available Vite environment variables
 console.log('All Vite env variables:', import.meta.env);
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+// Try to get the API URL from different possible sources
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL;
 console.log('API Base URL from env:', apiBaseUrl);
 
 if (!apiBaseUrl) {
-    console.error('VITE_API_BASE_URL is not set! Falling back to localhost');
+    console.error('VITE_API_BASE_URL is not set! This is a configuration error. Please set the environment variable in Coolify.');
 }
 
+// Create axios instance with explicit error handling for the base URL
 const api = axios.create({
     baseURL: apiBaseUrl || 'http://localhost:8000/api',
     headers: {
         'Content-Type': 'application/json',
-    }
+    },
+    timeout: 10000, // 10 second timeout
 });
 
 // Log the actual baseURL being used
 console.log('Axios instance baseURL:', api.defaults.baseURL);
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+    (config) => {
+        console.log('Making request to:', config.baseURL + config.url);
+        return config;
+    },
+    (error) => {
+        console.error('Request error:', error);
+        return Promise.reject(error);
+    }
+);
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+    (response) => {
+        console.log('Received response from:', response.config.url);
+        return response;
+    },
+    (error) => {
+        console.error('Response error:', error);
+        if (error.response) {
+            console.error('Error response:', error.response.data);
+        }
+        return Promise.reject(error);
+    }
+);
 
 // Mock data for development fallback
 const mockColleges: College[] = [
