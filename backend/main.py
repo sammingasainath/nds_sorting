@@ -38,40 +38,6 @@ app.add_middleware(
     max_age=86400,
 )
 
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    response = await call_next(request)
-    
-    # Get the origin from the request headers
-    origin = request.headers.get("origin")
-    
-    # If the origin is in our allowed origins, set the CORS headers
-    if origin in origins:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Max-Age"] = "86400"
-        response.headers["Access-Control-Expose-Headers"] = "*"
-    
-    return response
-
-@app.options("/{full_path:path}")
-async def options_handler(request: Request, full_path: str):
-    origin = request.headers.get("origin")
-    if origin in origins:
-        return Response(
-            content="",
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": "*",
-                "Access-Control-Max-Age": "86400",
-                "Access-Control-Expose-Headers": "*",
-            },
-        )
-    return Response()
-
 # Debug environment variables
 api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
 cx_id = os.getenv("GOOGLE_SEARCH_CX")

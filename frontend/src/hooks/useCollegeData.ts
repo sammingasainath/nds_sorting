@@ -20,22 +20,15 @@ const api = axios.create({
     baseURL: `${apiBaseUrl}/api`,  // Ensure we have exactly one /api in the path
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Accept': 'application/json'
     },
     timeout: 10000,
     withCredentials: false
 });
 
-// Add request interceptor for debugging and CORS handling
+// Add request interceptor for debugging
 api.interceptors.request.use(
     (config) => {
-        // Add CORS headers to every request
-        config.headers = {
-            ...config.headers,
-            'Origin': window.location.origin,
-        };
-
         const fullUrl = `${config.baseURL}${config.url}`;
         console.log('Making request to:', fullUrl);
         console.log('Request headers:', config.headers);
