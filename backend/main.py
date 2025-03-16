@@ -60,8 +60,27 @@ def get_csv_path():
     if csv_path_env:
         print(f"CSV_PATH environment variable is set to: {csv_path_env}")
         if os.path.exists(csv_path_env):
-            print(f"CSV file found at environment variable path: {csv_path_env}")
-            return csv_path_env
+            # Check if the path is a directory
+            if os.path.isdir(csv_path_env):
+                print(f"CSV_PATH is a directory: {csv_path_env}")
+                # Look for CSV files in the directory
+                try:
+                    files = os.listdir(csv_path_env)
+                    print(f"Files in {csv_path_env}: {files}")
+                    csv_files = [f for f in files if f.endswith('.csv')]
+                    print(f"CSV files found: {csv_files}")
+                    if csv_files:
+                        # Use the first CSV file found
+                        csv_file_path = os.path.join(csv_path_env, csv_files[0])
+                        print(f"Using CSV file: {csv_file_path}")
+                        return csv_file_path
+                    else:
+                        print(f"No CSV files found in directory: {csv_path_env}")
+                except Exception as e:
+                    print(f"Error listing directory {csv_path_env}: {str(e)}")
+            else:
+                print(f"CSV file found at environment variable path: {csv_path_env}")
+                return csv_path_env
         else:
             print(f"CSV file NOT found at environment variable path: {csv_path_env}")
     
@@ -83,6 +102,17 @@ def get_csv_path():
     data_dir = "/app/data"
     if os.path.exists(data_dir):
         print(f"Files in {data_dir}: {os.listdir(data_dir)}")
+        # Look for CSV files in the data directory
+        try:
+            files = os.listdir(data_dir)
+            csv_files = [f for f in files if f.endswith('.csv')]
+            if csv_files:
+                # Use the first CSV file found
+                csv_file_path = os.path.join(data_dir, csv_files[0])
+                print(f"Using CSV file from data directory: {csv_file_path}")
+                return csv_file_path
+        except Exception as e:
+            print(f"Error listing data directory: {str(e)}")
     
     # Check each possible path
     for path in possible_paths:
@@ -94,6 +124,12 @@ def get_csv_path():
     # If we get here, we couldn't find the file
     print("CSV file not found in any of the expected locations")
     print(f"Possible paths checked: {possible_paths}")
+    
+    # Use the sample.csv file we created earlier
+    sample_path = os.path.join(os.path.dirname(__file__), "sample.csv")
+    if os.path.exists(sample_path):
+        print(f"Using existing sample CSV file: {sample_path}")
+        return sample_path
     
     # Create and return a sample CSV file as a last resort
     fallback_path = os.path.join(os.path.dirname(__file__), "fallback.csv")
