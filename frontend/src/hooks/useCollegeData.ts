@@ -15,7 +15,7 @@ console.log('Processed Base URL:', baseUrl);
 
 // Create axios instance with explicit error handling for the base URL
 const api = axios.create({
-    baseURL: `${baseUrl}/api`,  // Add /api to the base URL
+    baseURL: baseUrl,  // Use base URL without /api
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -27,6 +27,9 @@ const api = axios.create({
 // Add detailed request logging
 api.interceptors.request.use(
     (config) => {
+        // Add /api prefix to all requests
+        config.url = `/api${config.url}`;
+        
         console.log('Full request configuration:', {
             url: config.url,
             baseURL: config.baseURL,
