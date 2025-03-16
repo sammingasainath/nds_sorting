@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useCollegeHistory } from '@/hooks/useCollegeHistory';
+import { useSortingHistory } from '@/contexts/SortingHistoryContext';
 
 export const RecursiveSorting: React.FC = () => {
     const {
@@ -37,6 +38,9 @@ export const RecursiveSorting: React.FC = () => {
 
     // Add college history hook
     const { saveIteration, isFirstIteration } = useCollegeHistory();
+    
+    // Add sorting history context
+    const { addSorting } = useSortingHistory();
 
     // Add iteration state
     const [currentIterationId, setCurrentIterationId] = useState<string>(() => 
@@ -120,8 +124,22 @@ export const RecursiveSorting: React.FC = () => {
         if (sortingResults.length > 0) {
             console.log('SORTING RESULTS DETECTED - SWITCHING TO RESULTS TAB');
             setActiveTab("results");
+            
+            // Save sorting results to history context
+            console.log('Saving sorting results to history:', {
+                selectedColleges,
+                selectedParameters,
+                sortingResults
+            });
+            
+            addSorting({
+                parentId: null,
+                selectedColleges,
+                selectedParameters,
+                sortingResults
+            });
         }
-    }, [sortingResults]);
+    }, [sortingResults, selectedColleges, selectedParameters, addSorting]);
 
     // Generate insights only when explicitly requested
     const generateInsights = async () => {
@@ -211,10 +229,7 @@ export const RecursiveSorting: React.FC = () => {
         // Switch back to the selection tab
         switchTab("selection");
         
-        // REMOVE the page reload which is causing state loss
-        // window.location.reload();
-        
-        // Instead, log the state for debugging
+        // Log the state for debugging
         console.log('🔄 [RecursiveSorting] New iteration started with:', {
             newIterationId,
             selectedColleges: selectedCollegeNames,
