@@ -4,8 +4,11 @@ import { College, NonDominatedSortingResult } from '@/types';
 import { nonDominatedSort } from '@/utils/sorting';
 
 // Create an axios instance with base configuration
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+console.log('API Base URL:', apiBaseUrl); // Debug log to check environment variable
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+    baseURL: apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     }
