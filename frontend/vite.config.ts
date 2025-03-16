@@ -7,6 +7,10 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
   
+  // Get the API URL from environment variable or use a default
+  const apiBaseUrl = process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+  console.log('Building with API URL:', apiBaseUrl)
+
   return {
     plugins: [react()],
     resolve: {
@@ -45,13 +49,15 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       // Ensure environment variables are exposed
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL),
+      __API_BASE_URL__: JSON.stringify(apiBaseUrl),
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(apiBaseUrl),
       'import.meta.env': JSON.stringify({
         ...env,
-        VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL,
+        VITE_API_BASE_URL: apiBaseUrl,
         DEV: mode === 'development',
         PROD: mode === 'production',
-        SSR: false
+        SSR: false,
+        BASE_URL: '/'
       })
     },
   }
