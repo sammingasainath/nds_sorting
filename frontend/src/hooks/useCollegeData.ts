@@ -5,17 +5,22 @@ import { nonDominatedSort } from '@/utils/sorting';
 
 // Debug all available Vite environment variables
 console.log('All Vite env variables:', import.meta.env);
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-console.log('API Base URL:', apiBaseUrl); // Debug log to check environment variable
-console.log('Is Production?:', import.meta.env.PROD);
-console.log('Is Development?:', import.meta.env.DEV);
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+console.log('API Base URL from env:', apiBaseUrl);
+
+if (!apiBaseUrl) {
+    console.error('VITE_API_BASE_URL is not set! Falling back to localhost');
+}
 
 const api = axios.create({
-    baseURL: apiBaseUrl,
+    baseURL: apiBaseUrl || 'http://localhost:8000/api',
     headers: {
         'Content-Type': 'application/json',
     }
 });
+
+// Log the actual baseURL being used
+console.log('Axios instance baseURL:', api.defaults.baseURL);
 
 // Mock data for development fallback
 const mockColleges: College[] = [
