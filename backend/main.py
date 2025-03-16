@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 import pandas as pd
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
@@ -9,8 +9,8 @@ import httpx
 import json
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Load environment variables
 env_path = Path(__file__).parent / '.env'
@@ -22,49 +22,39 @@ app = FastAPI(
     description="API for college sorting and comparison"
 )
 
-# Configure CORS with more permissive settings for debugging
-origins = [
-    "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
-    "https://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
-    "http://ukoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
-    "https://ukoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
+# Custom CORS middleware class
+class AllowAllCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Process the request
+        response = await call_next(request)
+        
+        # Add CORS headers to all responses
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        response.headers["Access-Control-Expose-Headers"] = "*"
+        
+        return response
 
-# Add CORS middleware with specific configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for debugging
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=86400,
-)
+# Add our custom CORS middleware
+app.add_middleware(AllowAllCORSMiddleware)
 
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    response = await call_next(request)
-    
-    # Add CORS headers to all responses
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    
-    return response
-
+# Handle OPTIONS requests globally
 @app.options("/{full_path:path}")
 async def options_handler(request: Request, full_path: str):
-    """Handle preflight requests"""
-    return Response(
+    """Handle preflight requests for all routes"""
+    return PlainTextResponse(
+        "",
         status_code=200,
         headers={
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Credentials": "false",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Max-Age": "86400",
+            "Access-Control-Expose-Headers": "*",
         }
     )
 
@@ -76,7 +66,8 @@ async def debug_cors():
     """
     return {
         "status": "ok",
-        "message": "CORS headers should be present in response"
+        "message": "CORS headers should be present in response",
+        "cors_enabled": True
     }
 
 # Debug environment variables
@@ -200,7 +191,7 @@ def get_csv_path():
         # Return the first path as default, but it will likely fail
         return "/app/Scores with Names.csv"
 
-@app.get("/colleges", response_model=CollegeData)
+@app.get("/api/colleges", response_model=CollegeData)
 async def get_colleges():
     """
     Load and return college data from CSV file
@@ -251,7 +242,7 @@ async def get_colleges():
         print(error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
-@app.get("/parameters", response_model=ParameterData)
+@app.get("/api/parameters", response_model=ParameterData)
 async def get_parameters():
     """
     Return available parameters for sorting
@@ -305,7 +296,7 @@ async def get_parameters():
         print(error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
-@app.get("/search", response_model=SearchResponse)
+@app.get("/api/search", response_model=SearchResponse)
 async def search_web(q: str):
     try:
         # Get the API key from environment variables
@@ -414,14 +405,14 @@ def create_mock_results(query: str) -> List[SearchResult]:
         )
     ]
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """
     Simple health check endpoint
     """
     return {"status": "ok", "message": "API is running"}
 
-@app.get("/debug")
+@app.get("/api/debug")
 async def debug_info():
     """
     Debug endpoint to verify routing

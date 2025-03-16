@@ -27,8 +27,10 @@ const api = axios.create({
 // Add detailed request logging
 api.interceptors.request.use(
     (config) => {
-        // Add /api prefix to all requests
-        config.url = `/api${config.url}`;
+        // Add /api prefix to all requests if not already present
+        if (!config.url?.startsWith('/api')) {
+            config.url = `/api${config.url}`;
+        }
         
         console.log('Full request configuration:', {
             url: config.url,
