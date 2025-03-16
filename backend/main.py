@@ -23,14 +23,18 @@ print(f"CX ID loaded: {bool(cx_id)}")
 app = FastAPI()
 
 # Configure CORS
-origins = ["*"]
+origins = [
+    "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",  # Frontend domain
+    "http://localhost:5173",  # Local development
+    "http://localhost:3000"   # Alternative local development
+]
 
 # Add CORS middleware with more specific configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,  # Set to False since we're not using cookies
-    allow_methods=["*"],  # Explicitly list allowed methods
+    allow_credentials=False,  # Set to False since we're not using cookies
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly list allowed methods
     allow_headers=["*"],
     max_age=86400,  # Cache preflight requests for 24 hours
 )

@@ -7,7 +7,7 @@ import { nonDominatedSort } from '@/utils/sorting';
 console.log('All Vite env variables:', import.meta.env);
 
 // Get the API URL from the environment
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || 'http://localhost:8000';
 console.log('API Base URL from env:', apiBaseUrl);
 
 if (!apiBaseUrl) {
@@ -16,7 +16,7 @@ if (!apiBaseUrl) {
 
 // Create axios instance with explicit error handling for the base URL
 const api = axios.create({
-    baseURL: apiBaseUrl,
+    baseURL: `${apiBaseUrl}/api`,  // Ensure we have exactly one /api in the path
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
