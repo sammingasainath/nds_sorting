@@ -21,14 +21,21 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Access-Control-Allow-Origin': '*',
     },
     timeout: 10000,
     withCredentials: false
 });
 
-// Add request interceptor for debugging
+// Add request interceptor for debugging and CORS handling
 api.interceptors.request.use(
     (config) => {
+        // Add CORS headers to every request
+        config.headers = {
+            ...config.headers,
+            'Origin': window.location.origin,
+        };
+
         const fullUrl = `${config.baseURL}${config.url}`;
         console.log('Making request to:', fullUrl);
         console.log('Request headers:', config.headers);
@@ -45,6 +52,7 @@ api.interceptors.response.use(
     (response) => {
         console.log('Received response from:', response.config.url);
         console.log('Response headers:', response.headers);
+        console.log('Response data:', response.data);
         return response;
     },
     (error) => {
@@ -52,6 +60,9 @@ api.interceptors.response.use(
         if (error.response) {
             console.error('Error response:', error.response.data);
             console.error('Error response headers:', error.response.headers);
+            console.error('Error response status:', error.response.status);
+        } else if (error.request) {
+            console.error('Error request:', error.request);
         }
         return Promise.reject(error);
     }

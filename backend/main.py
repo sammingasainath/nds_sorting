@@ -9,41 +9,74 @@ import httpx
 import json
 from pathlib import Path
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import Response
 
 # Load environment variables
 env_path = Path(__file__).parent / '.env'
 print(f"Looking for .env file at: {env_path}")
 load_dotenv(dotenv_path=env_path)
 
+app = FastAPI()
+
+# Configure CORS
+origins = [
+    "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
+    "https://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+# Add CORS middleware with specific configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,
+)
+
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Get the origin from the request headers
+    origin = request.headers.get("origin")
+    
+    # If the origin is in our allowed origins, set the CORS headers
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        response.headers["Access-Control-Expose-Headers"] = "*"
+    
+    return response
+
+@app.options("/{full_path:path}")
+async def options_handler(request: Request, full_path: str):
+    origin = request.headers.get("origin")
+    if origin in origins:
+        return Response(
+            content="",
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+                "Access-Control-Expose-Headers": "*",
+            },
+        )
+    return Response()
+
 # Debug environment variables
 api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
 cx_id = os.getenv("GOOGLE_SEARCH_CX")
 print(f"API Key loaded: {bool(api_key)}")
 print(f"CX ID loaded: {bool(cx_id)}")
-
-app = FastAPI()
-
-# Configure CORS with more permissive settings
-origins = [
-    "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",  # Frontend domain
-    "https://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",  # Frontend domain (HTTPS)
-    "http://ukkoww444o88k08ws0g48c080.178.16.137.152.sslip.io",  # Backend domain
-    "https://ukkoww444o88k08ws0g48c080.178.16.137.152.sslip.io",  # Backend domain (HTTPS)
-    "http://localhost:5173",  # Local development
-    "http://localhost:3000",  # Alternative local development
-    "http://localhost:8000"   # Local backend
-]
-
-# Add CORS middleware with more permissive configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily
-    allow_credentials=False,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
-    expose_headers=["*"],
-    max_age=86400,
-)
 
 # Data models
 class CollegeData(BaseModel):
