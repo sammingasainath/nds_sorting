@@ -255,6 +255,7 @@ export const CollegeDetails: React.FC<CollegeDetailsProps> = ({
   const dataCache = useRef<Record<string, any>>({});
   const fetchingRef = useRef<Record<string, boolean>>({});
 
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
   const searchQueries = {
     general: `${college.Name} college university general information`,
     campus: `${college.Name} college university campus tour facilities`,
@@ -286,7 +287,7 @@ export const CollegeDetails: React.FC<CollegeDetailsProps> = ({
     setLoading(prev => ({ ...prev, [category]: true }));
 
     try {
-      const response = await fetch(`http://localhost:8000/api/search?q=${encodeURIComponent(searchQueries[category])}`);
+      const response = await fetch(`${apiBaseUrl}/search?q=${encodeURIComponent(searchQueries[category])}`);
       const data = await response.json();
       const results = data.results || [];
       
