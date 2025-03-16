@@ -3,9 +3,12 @@ import axios from 'axios';
 import { College, NonDominatedSortingResult } from '@/types';
 import { nonDominatedSort } from '@/utils/sorting';
 
-// Create an axios instance with base configuration
+// Debug all available Vite environment variables
+console.log('All Vite env variables:', import.meta.env);
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 console.log('API Base URL:', apiBaseUrl); // Debug log to check environment variable
+console.log('Is Production?:', import.meta.env.PROD);
+console.log('Is Development?:', import.meta.env.DEV);
 
 const api = axios.create({
     baseURL: apiBaseUrl,

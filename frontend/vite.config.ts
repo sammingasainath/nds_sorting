@@ -38,5 +38,9 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true
-  }
+  },
+  define: {
+    // Ensure environment variables are exposed
+    'process.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),
+  },
 })
