@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, History } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 // Component for the Pareto front results in the main sorting page
 interface SortingHistoryProps {
@@ -109,6 +110,7 @@ export const SortingHistory: React.FC<SortingHistoryProps> = ({
 // Component for the history page
 export const SortingHistoryView: React.FC = () => {
   const { state, restoreEntry } = useSortingHistory();
+  const navigate = useNavigate();
 
   const sortedEntries = React.useMemo(() => {
     return Object.values(state.entries)
@@ -116,7 +118,10 @@ export const SortingHistoryView: React.FC = () => {
   }, [state.entries]);
 
   const handleRestore = (entryId: string) => {
+    console.log('Restoring entry and navigating to explore page:', entryId);
     restoreEntry(entryId);
+    // Navigate to the explore page
+    navigate('/explore');
   };
 
   if (sortedEntries.length === 0) {
