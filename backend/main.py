@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import pandas as pd
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
@@ -22,22 +23,56 @@ print(f"CX ID loaded: {bool(cx_id)}")
 
 app = FastAPI()
 
-# Configure CORS
+# Configure CORS with more specific settings
 origins = [
     "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",  # Frontend domain
     "http://localhost:5173",  # Local development
     "http://localhost:3000"   # Alternative local development
 ]
 
-# Add CORS middleware with more specific configuration
+# Add CORS middleware with explicit headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=False,  # Set to False since we're not using cookies
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly list allowed methods
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
-    max_age=86400,  # Cache preflight requests for 24 hours
+    expose_headers=["*"],
+    max_age=86400,
 )
+
+# Add custom middleware to handle CORS preflight
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Get the origin from the request headers
+    origin = request.headers.get("origin")
+    
+    # If the origin is in our allowed origins, set the CORS headers
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "86400"
+    
+    return response
+
+# Handle OPTIONS requests explicitly
+@app.options("/{full_path:path}")
+async def options_handler(request: Request):
+    origin = request.headers.get("origin")
+    if origin in origins:
+        return JSONResponse(
+            content={},
+            headers={
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+            },
+        )
+    return JSONResponse(content={})
 
 # Data models
 class CollegeData(BaseModel):
