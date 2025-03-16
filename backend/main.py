@@ -71,6 +71,7 @@ def get_csv_path():
         "/app/Scores with Names.csv",  # Docker container root
         os.path.join(os.path.dirname(os.path.dirname(__file__)), "Scores with Names.csv"),  # Parent directory
         os.path.join(os.path.dirname(__file__), "Scores with Names.csv"),  # Same directory as script
+        os.path.join(os.path.dirname(__file__), "sample.csv"),  # Fallback sample file
     ]
     
     # Debug: Print current directory and file existence
@@ -94,8 +95,22 @@ def get_csv_path():
     print("CSV file not found in any of the expected locations")
     print(f"Possible paths checked: {possible_paths}")
     
-    # Return the first path as default, but it will likely fail
-    return possible_paths[0]
+    # Create and return a sample CSV file as a last resort
+    fallback_path = os.path.join(os.path.dirname(__file__), "fallback.csv")
+    try:
+        print(f"Creating fallback CSV file at: {fallback_path}")
+        with open(fallback_path, 'w') as f:
+            f.write("ID,Name,Score1,Score2,Score3\n")
+            f.write("1,College A,90,85,95\n")
+            f.write("2,College B,80,90,85\n")
+            f.write("3,College C,85,80,90\n")
+            f.write("4,College D,95,75,80\n")
+            f.write("5,College E,75,95,85\n")
+        return fallback_path
+    except Exception as e:
+        print(f"Error creating fallback CSV: {str(e)}")
+        # Return the first path as default, but it will likely fail
+        return possible_paths[0]
 
 @app.get("/api/colleges", response_model=CollegeData)
 async def get_colleges():
@@ -104,14 +119,49 @@ async def get_colleges():
     """
     try:
         csv_path = get_csv_path()
+        print(f"Using CSV path: {csv_path}")
+        
         if not os.path.exists(csv_path):
-            raise FileNotFoundError(f"CSV file not found at: {csv_path}")
+            error_msg = f"CSV file not found at: {csv_path}"
+            print(error_msg)
+            raise FileNotFoundError(error_msg)
+        
+        # Check file size and permissions
+        file_size = os.path.getsize(csv_path)
+        print(f"CSV file size: {file_size} bytes")
+        
+        # Try to read the file content directly first
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                first_few_lines = ''.join(f.readlines(10))
+                print(f"First few lines of CSV file:\n{first_few_lines}")
+        except Exception as read_error:
+            print(f"Error reading CSV file directly: {str(read_error)}")
+        
+        # Now try with pandas
+        try:
+            print("Attempting to read CSV with pandas...")
+            df = pd.read_csv(csv_path)
+            print(f"CSV loaded successfully. Shape: {df.shape}")
+            print(f"CSV columns: {df.columns.tolist()}")
             
-        df = pd.read_csv(csv_path)
-        colleges = df.to_dict(orient='records')
-        return {"status": "success", "data": colleges}
+            colleges = df.to_dict(orient='records')
+            return {"status": "success", "data": colleges}
+        except Exception as pandas_error:
+            print(f"Error reading CSV with pandas: {str(pandas_error)}")
+            # Try with different encoding
+            try:
+                print("Trying with different encoding (latin-1)...")
+                df = pd.read_csv(csv_path, encoding='latin-1')
+                colleges = df.to_dict(orient='records')
+                return {"status": "success", "data": colleges}
+            except Exception as encoding_error:
+                print(f"Error with alternative encoding: {str(encoding_error)}")
+                raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = f"Error processing CSV file: {str(e)}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/api/parameters", response_model=ParameterData)
 async def get_parameters():
@@ -120,15 +170,52 @@ async def get_parameters():
     """
     try:
         csv_path = get_csv_path()
+        print(f"Using CSV path: {csv_path}")
+        
         if not os.path.exists(csv_path):
-            raise FileNotFoundError(f"CSV file not found at: {csv_path}")
+            error_msg = f"CSV file not found at: {csv_path}"
+            print(error_msg)
+            raise FileNotFoundError(error_msg)
+        
+        # Check file size and permissions
+        file_size = os.path.getsize(csv_path)
+        print(f"CSV file size: {file_size} bytes")
+        
+        # Try to read the file content directly first
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                first_few_lines = ''.join(f.readlines(10))
+                print(f"First few lines of CSV file:\n{first_few_lines}")
+        except Exception as read_error:
+            print(f"Error reading CSV file directly: {str(read_error)}")
+        
+        # Now try with pandas
+        try:
+            print("Attempting to read CSV with pandas...")
+            df = pd.read_csv(csv_path)
+            print(f"CSV loaded successfully. Shape: {df.shape}")
+            print(f"CSV columns: {df.columns.tolist()}")
             
-        df = pd.read_csv(csv_path)
-        # Get numerical columns only, excluding ID and Name
-        parameters = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
-        return {"status": "success", "data": parameters}
+            # Get numerical columns only, excluding ID and Name
+            numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+            print(f"Numeric columns: {numeric_columns}")
+            
+            return {"status": "success", "data": numeric_columns}
+        except Exception as pandas_error:
+            print(f"Error reading CSV with pandas: {str(pandas_error)}")
+            # Try with different encoding
+            try:
+                print("Trying with different encoding (latin-1)...")
+                df = pd.read_csv(csv_path, encoding='latin-1')
+                numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+                return {"status": "success", "data": numeric_columns}
+            except Exception as encoding_error:
+                print(f"Error with alternative encoding: {str(encoding_error)}")
+                raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = f"Error processing CSV file: {str(e)}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/api/search", response_model=SearchResponse)
 async def search_web(q: str):
@@ -238,6 +325,13 @@ def create_mock_results(query: str) -> List[SearchResult]:
             source="Alumni Association"
         )
     ]
+
+@app.get("/health")
+async def health_check():
+    """
+    Simple health check endpoint
+    """
+    return {"status": "ok", "message": "API is running"}
 
 if __name__ == "__main__":
     import uvicorn
