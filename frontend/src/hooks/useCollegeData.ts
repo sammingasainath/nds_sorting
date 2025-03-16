@@ -7,7 +7,14 @@ import { nonDominatedSort } from '@/utils/sorting';
 console.log('All Vite env variables:', import.meta.env);
 
 // Get the API URL from the environment and ensure proper formatting
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+// Convert HTTP to HTTPS if the frontend is on HTTPS
+if (typeof window !== 'undefined' && window.location.protocol === 'https:' && rawBaseUrl.startsWith('http:')) {
+    rawBaseUrl = rawBaseUrl.replace('http:', 'https:');
+    console.log('Converted API URL to HTTPS:', rawBaseUrl);
+}
+
 // Remove trailing /api if it exists
 const baseUrl = rawBaseUrl.endsWith('/api') ? rawBaseUrl.slice(0, -4) : rawBaseUrl;
 console.log('Raw Base URL:', rawBaseUrl);
