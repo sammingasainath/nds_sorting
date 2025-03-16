@@ -22,13 +22,21 @@ print(f"CX ID loaded: {bool(cx_id)}")
 
 app = FastAPI()
 
-# Configure CORS with more permissive settings for development
+# Configure CORS
+origins = [
+    "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",  # Your frontend domain
+    "https://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",  # HTTPS version
+    "http://localhost:5174",  # Local development
+    "http://localhost:3000",  # Alternative local development
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # More permissive for development
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Data models

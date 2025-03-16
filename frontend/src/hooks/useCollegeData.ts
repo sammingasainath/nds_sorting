@@ -19,8 +19,10 @@ const api = axios.create({
     baseURL: apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
     },
     timeout: 10000, // 10 second timeout
+    withCredentials: true, // Important for CORS with credentials
 });
 
 // Log the actual baseURL being used
@@ -30,6 +32,9 @@ console.log('Axios instance baseURL:', api.defaults.baseURL);
 api.interceptors.request.use(
     (config) => {
         console.log('Making request to:', config.baseURL + config.url);
+        // Ensure CORS headers are present
+        config.headers['Access-Control-Allow-Origin'] = 'http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io';
+        config.headers['Access-Control-Allow-Credentials'] = 'true';
         return config;
     },
     (error) => {
