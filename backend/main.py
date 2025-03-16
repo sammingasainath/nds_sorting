@@ -19,16 +19,15 @@ load_dotenv(dotenv_path=env_path)
 
 app = FastAPI(
     title="College Sorting API",
-    description="API for college sorting and comparison",
-    root_path="/api"  # Add root path to match frontend expectations
+    description="API for college sorting and comparison"
 )
 
 # Configure CORS with more permissive settings for debugging
 origins = [
     "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
     "https://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
-    "http://ukkoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
-    "https://ukkoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
+    "http://ukoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
+    "https://ukoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
     "http://localhost:5173",
     "http://localhost:3000",
 ]
@@ -36,9 +35,9 @@ origins = [
 # Add CORS middleware with specific configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for debugging
+    allow_origins=origins,
     allow_credentials=False,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=86400,
@@ -165,7 +164,7 @@ def get_csv_path():
         # Return the first path as default, but it will likely fail
         return "/app/Scores with Names.csv"
 
-@app.get("/api/colleges", response_model=CollegeData)
+@app.get("/colleges", response_model=CollegeData)
 async def get_colleges():
     """
     Load and return college data from CSV file
@@ -216,7 +215,7 @@ async def get_colleges():
         print(error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
-@app.get("/api/parameters", response_model=ParameterData)
+@app.get("/parameters", response_model=ParameterData)
 async def get_parameters():
     """
     Return available parameters for sorting
@@ -270,7 +269,7 @@ async def get_parameters():
         print(error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
-@app.get("/api/search", response_model=SearchResponse)
+@app.get("/search", response_model=SearchResponse)
 async def search_web(q: str):
     try:
         # Get the API key from environment variables
@@ -394,7 +393,6 @@ async def debug_info():
     return {
         "status": "ok",
         "message": "Debug endpoint reached",
-        "root_path": app.root_path,
         "routes": [{"path": route.path, "name": route.name} for route in app.routes]
     }
 

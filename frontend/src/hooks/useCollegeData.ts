@@ -12,7 +12,7 @@ console.log('Raw Base URL:', rawBaseUrl);
 
 // Create axios instance with explicit error handling for the base URL
 const api = axios.create({
-    baseURL: rawBaseUrl,  // Use the raw URL directly, don't add /api
+    baseURL: `${rawBaseUrl}/api`,  // Add /api to the base URL
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -24,6 +24,11 @@ const api = axios.create({
 // Add detailed request logging
 api.interceptors.request.use(
     (config) => {
+        // Remove /api from the URL since it's already in the baseURL
+        if (config.url?.startsWith('/api')) {
+            config.url = config.url.substring(4);
+        }
+        
         console.log('Full request configuration:', {
             url: config.url,
             baseURL: config.baseURL,
