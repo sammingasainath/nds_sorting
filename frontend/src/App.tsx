@@ -1,12 +1,13 @@
 import { LLMProviderContext } from '@/contexts/LLMContext';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { Router } from './router';
+import { router } from './router';
+import { RouterProvider } from 'react-router-dom';
 
 function App() {
     return (
         <LLMProviderContext>
             <ThemeProvider>
-                <Router />
+                <RouterProvider router={router} />
             </ThemeProvider>
         </LLMProviderContext>
     );
