@@ -6,13 +6,14 @@ import { nonDominatedSort } from '@/utils/sorting';
 // Debug all available Vite environment variables
 console.log('All Vite env variables:', import.meta.env);
 
-// Get the API URL from the environment
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || 'http://localhost:8000';
-console.log('API Base URL from env:', apiBaseUrl);
+// Get the API URL from the environment and ensure proper formatting
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const apiBaseUrl = rawBaseUrl.endsWith('/api') 
+    ? rawBaseUrl.slice(0, -4) // Remove /api if it exists
+    : rawBaseUrl;
 
-if (!apiBaseUrl) {
-    console.error('VITE_API_BASE_URL is not set! This is a configuration error. Please set the environment variable in Coolify.');
-}
+console.log('Raw Base URL:', rawBaseUrl);
+console.log('Processed API Base URL:', apiBaseUrl);
 
 // Create axios instance with explicit error handling for the base URL
 const api = axios.create({
@@ -21,17 +22,16 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
-    timeout: 10000, // 10 second timeout
-    withCredentials: false, // Changed to false since we're not using cookies
+    timeout: 10000,
+    withCredentials: false
 });
-
-// Log the actual baseURL being used
-console.log('Axios instance baseURL:', api.defaults.baseURL);
 
 // Add request interceptor for debugging
 api.interceptors.request.use(
     (config) => {
-        console.log('Making request to:', config.baseURL + config.url);
+        const fullUrl = `${config.baseURL}${config.url}`;
+        console.log('Making request to:', fullUrl);
+        console.log('Request headers:', config.headers);
         return config;
     },
     (error) => {
@@ -44,12 +44,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => {
         console.log('Received response from:', response.config.url);
+        console.log('Response headers:', response.headers);
         return response;
     },
     (error) => {
         console.error('Response error:', error);
         if (error.response) {
             console.error('Error response:', error.response.data);
+            console.error('Error response headers:', error.response.headers);
         }
         return Promise.reject(error);
     }
