@@ -30,13 +30,14 @@ origins = [
     "http://localhost:3000",  # Alternative local development
 ]
 
+# Add CORS middleware with more specific configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,  # Set to False since we're not using cookies
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly list allowed methods
     allow_headers=["*"],
-    expose_headers=["*"]
+    max_age=86400,  # Cache preflight requests for 24 hours
 )
 
 # Data models
