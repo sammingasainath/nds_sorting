@@ -55,8 +55,19 @@ def get_csv_path():
     Get the path to the CSV file by checking multiple possible locations.
     Also prints debug information about the file search.
     """
+    # First check if CSV_PATH environment variable is set
+    csv_path_env = os.getenv("CSV_PATH")
+    if csv_path_env:
+        print(f"CSV_PATH environment variable is set to: {csv_path_env}")
+        if os.path.exists(csv_path_env):
+            print(f"CSV file found at environment variable path: {csv_path_env}")
+            return csv_path_env
+        else:
+            print(f"CSV file NOT found at environment variable path: {csv_path_env}")
+    
     possible_paths = [
         "Scores with Names.csv",  # Current directory
+        "/app/data/Scores with Names.csv",  # New mounted directory
         "/app/Scores with Names.csv",  # Docker container root
         os.path.join(os.path.dirname(os.path.dirname(__file__)), "Scores with Names.csv"),  # Parent directory
         os.path.join(os.path.dirname(__file__), "Scores with Names.csv"),  # Same directory as script
@@ -66,6 +77,11 @@ def get_csv_path():
     current_dir = os.getcwd()
     print(f"Current directory: {current_dir}")
     print(f"Files in current directory: {os.listdir(current_dir)}")
+    
+    # If /app/data exists, list its contents
+    data_dir = "/app/data"
+    if os.path.exists(data_dir):
+        print(f"Files in {data_dir}: {os.listdir(data_dir)}")
     
     # Check each possible path
     for path in possible_paths:
