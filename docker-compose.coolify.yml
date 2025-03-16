@@ -8,12 +8,10 @@ services:
       - "${BACKEND_PORT:-7000}:8000"
     volumes:
       - ./:/app/data
-      - ./backend/sample_data.csv:/app/sample_data.csv
     environment:
       - GOOGLE_SEARCH_API_KEY=${GOOGLE_SEARCH_API_KEY}
       - GOOGLE_SEARCH_CX=${GOOGLE_SEARCH_CX}
       - CSV_PATH=/app/data/Scores with Names.csv
-      - FALLBACK_CSV_PATH=/app/sample_data.csv
     restart: unless-stopped
     networks:
       - nds-network
