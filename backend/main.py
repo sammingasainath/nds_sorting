@@ -17,12 +17,18 @@ env_path = Path(__file__).parent / '.env'
 print(f"Looking for .env file at: {env_path}")
 load_dotenv(dotenv_path=env_path)
 
-app = FastAPI()
+app = FastAPI(
+    title="College Sorting API",
+    description="API for college sorting and comparison",
+    root_path="/api"  # Add root path to match frontend expectations
+)
 
-# Configure CORS
+# Configure CORS with more permissive settings for debugging
 origins = [
     "http://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
     "https://kk0c4g00s4w8ccg0c084g0ck.178.16.137.152.sslip.io",
+    "http://ukkoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
+    "https://ukkoww444o88k08ws0g48c080.178.16.137.152.sslip.io",
     "http://localhost:5173",
     "http://localhost:3000",
 ]
@@ -30,9 +36,9 @@ origins = [
 # Add CORS middleware with specific configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Temporarily allow all origins for debugging
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=86400,
@@ -379,6 +385,18 @@ async def health_check():
     Simple health check endpoint
     """
     return {"status": "ok", "message": "API is running"}
+
+@app.get("/debug")
+async def debug_info():
+    """
+    Debug endpoint to verify routing
+    """
+    return {
+        "status": "ok",
+        "message": "Debug endpoint reached",
+        "root_path": app.root_path,
+        "routes": [{"path": route.path, "name": route.name} for route in app.routes]
+    }
 
 if __name__ == "__main__":
     import uvicorn

@@ -8,16 +8,11 @@ console.log('All Vite env variables:', import.meta.env);
 
 // Get the API URL from the environment and ensure proper formatting
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const apiBaseUrl = rawBaseUrl.endsWith('/api') 
-    ? rawBaseUrl.slice(0, -4) // Remove /api if it exists
-    : rawBaseUrl;
-
 console.log('Raw Base URL:', rawBaseUrl);
-console.log('Processed API Base URL:', apiBaseUrl);
 
 // Create axios instance with explicit error handling for the base URL
 const api = axios.create({
-    baseURL: `${apiBaseUrl}/api`,  // Ensure we have exactly one /api in the path
+    baseURL: rawBaseUrl,  // Use the raw URL directly, don't add /api
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -26,12 +21,16 @@ const api = axios.create({
     withCredentials: false
 });
 
-// Add request interceptor for debugging
+// Add detailed request logging
 api.interceptors.request.use(
     (config) => {
-        const fullUrl = `${config.baseURL}${config.url}`;
-        console.log('Making request to:', fullUrl);
-        console.log('Request headers:', config.headers);
+        console.log('Full request configuration:', {
+            url: config.url,
+            baseURL: config.baseURL,
+            fullURL: `${config.baseURL}${config.url}`,
+            method: config.method,
+            headers: config.headers
+        });
         return config;
     },
     (error) => {
