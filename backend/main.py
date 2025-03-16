@@ -296,14 +296,25 @@ async def get_parameters():
         print(error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
+@app.get("/search", response_model=SearchResponse)
+async def search_web_direct(q: str):
+    """
+    Search endpoint that can be accessed directly without /api prefix
+    """
+    return await search_web(q)
+
 @app.get("/api/search", response_model=SearchResponse)
 async def search_web(q: str):
+    """
+    Search for college information using Google Custom Search
+    """
     try:
         # Get the API key from environment variables
         api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
         cx = os.getenv("GOOGLE_SEARCH_CX")
 
         # Debug logging
+        print(f"Search query: {q}")
         print("API Key present:", bool(api_key))
         print("CX ID present:", bool(cx))
 

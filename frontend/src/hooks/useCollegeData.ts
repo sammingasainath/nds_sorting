@@ -79,6 +79,29 @@ const mockColleges: College[] = [
 
 const mockParameters = ["Rank", "Research", "Teaching", "Employment"];
 
+// Function to search for college information
+export async function searchCollegeInfo(query: string) {
+    try {
+        console.log(`Searching for: ${query}`);
+        const response = await api.get('/search', { params: { q: query } });
+        console.log('Search response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error searching for college info:', error);
+        // Return mock data as fallback
+        return {
+            results: [
+                {
+                    title: `About ${query}`,
+                    link: "https://example.com/overview",
+                    snippet: `Information about ${query} is not available at the moment.`,
+                    source: "Mock Data"
+                }
+            ]
+        };
+    }
+}
+
 export function useCollegeData() {
     const [colleges, setColleges] = useState<College[]>([]);
     const [parameters, setParameters] = useState<string[]>([]);
