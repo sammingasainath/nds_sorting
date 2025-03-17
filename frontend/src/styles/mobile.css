@@ -6,34 +6,39 @@
   [role="button"],
   input[type="submit"],
   input[type="reset"],
-  input[type="button"] {
+  input[type="button"],
+  a {
     min-height: 44px;
     min-width: 44px;
     padding: 12px 16px;
+    touch-action: manipulation;
   }
 
   /* Improve scrolling */
   .scroll-area {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    overscroll-behavior-y: contain;
   }
 
   /* Adjust spacing for mobile */
   .container {
     padding-left: 16px;
     padding-right: 16px;
+    max-width: 100% !important;
   }
 
   /* Improve card layouts */
   .card {
     margin-bottom: 16px;
     border-radius: 12px;
+    padding: 16px;
   }
 
   /* Adjust grid layouts */
   .grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
   }
 
   /* Improve form elements */
@@ -42,32 +47,38 @@
   textarea {
     font-size: 16px; /* Prevent zoom on iOS */
     padding: 12px;
+    border-radius: 8px;
+    width: 100%;
   }
 
   /* Adjust text sizes */
   h1 {
     font-size: 24px;
+    line-height: 1.3;
   }
 
   h2 {
     font-size: 20px;
+    line-height: 1.3;
   }
 
   h3 {
     font-size: 18px;
+    line-height: 1.3;
   }
 
   p {
-    font-size: 14px;
+    font-size: 16px;
+    line-height: 1.5;
   }
 
-  /* Improve spacing in lists */
+  /* Improve list spacing */
   ul, ol {
     padding-left: 20px;
   }
 
   li {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   /* Adjust table layouts */
@@ -75,6 +86,7 @@
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
   }
 
   /* Improve dialog/modal positioning */
@@ -82,11 +94,12 @@
     width: 100%;
     max-width: 100%;
     margin: 0;
-    border-radius: 12px 12px 0 0;
+    border-radius: 20px 20px 0 0;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    padding: 20px;
   }
 
   /* Add safe area insets for modern iOS devices */
@@ -94,72 +107,102 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Improve tab navigation */
-  .tabs-list {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  /* Improve navigation */
+  .nav-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
   }
 
-  .tabs-list::-webkit-scrollbar {
-    display: none;
+  /* Improve menu items */
+  .menu-item {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
   }
 
-  /* Adjust sheet/drawer positioning */
-  .sheet-content {
-    padding-bottom: env(safe-area-inset-bottom);
+  /* Improve search experience */
+  .search-input {
+    height: 48px;
+    font-size: 16px;
+    padding: 0 16px;
+    border-radius: 24px;
+    width: 100%;
   }
 
   /* Improve button groups */
   .button-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    width: 100%;
   }
 
   .button-group button {
     width: 100%;
   }
 
-  /* Improve search input */
-  .search-input {
-    height: 44px;
-    font-size: 16px;
-  }
-
-  /* Adjust spacing in forms */
+  /* Improve form groups */
   .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
 
-  /* Improve checkbox and radio button touch targets */
+  /* Improve checkbox and radio */
   .checkbox,
   .radio {
     width: 24px;
     height: 24px;
+    margin-right: 12px;
   }
 
-  /* Add pull-to-refresh visual feedback */
+  /* Add pull-to-refresh indicator */
   .pull-to-refresh {
     height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
+
+  /* Improve mobile header */
+  .mobile-header {
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: var(--background);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Improve mobile menu */
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background-color: var(--background);
+    padding: 16px;
+  }
 }
 
-/* Additional mobile-specific adjustments */
+/* Additional adjustments for very small screens */
 @media (max-width: 480px) {
-  /* Further reduce padding for very small screens */
   .container {
     padding-left: 12px;
     padding-right: 12px;
   }
 
-  /* Adjust font sizes for very small screens */
   h1 {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   h2 {
@@ -171,6 +214,26 @@
   }
 
   p {
-    font-size: 13px;
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .button-group {
+    gap: 8px;
+  }
+}
+
+/* Handle notched displays */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .mobile-header {
+    padding-top: env(safe-area-inset-top);
+    height: calc(56px + env(safe-area-inset-top));
+  }
+
+  .mobile-menu {
+    padding-top: calc(16px + env(safe-area-inset-top));
   }
 } 
