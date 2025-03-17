@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { College } from '@/types';
+import { College } from '@/types/college';
 import { Loader2, ArrowUpRight, ExternalLink, Globe, Linkedin, Youtube, MessageCircle, School } from "lucide-react";
 import { extractStructuredInformation, categorizeYouTubeVideos } from '@/utils/summarization';
 import { Separator } from "@/components/ui/separator";
@@ -824,6 +824,16 @@ export const CollegeDetails: React.FC<CollegeDetailsProps> = ({
         </motion.div>
       </div>
     );
+  };
+
+  const renderValue = (value: any) => {
+    if (value === null || value === undefined) return 'N/A';
+    if (typeof value === 'object') {
+      if ('description' in value) return value.description;
+      if ('fullName' in value) return value.fullName;
+      return JSON.stringify(value);
+    }
+    return String(value);
   };
 
   return (

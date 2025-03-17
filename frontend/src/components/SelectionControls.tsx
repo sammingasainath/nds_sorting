@@ -480,6 +480,12 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{college.Name}</DialogTitle>
+                            <DialogDescription>
+                              Detailed information about this college
+                            </DialogDescription>
+                          </DialogHeader>
                           <CollegeDetails college={college} />
                         </DialogContent>
                       </Dialog>
@@ -575,7 +581,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{info}</p>
+                              <p>{typeof info === 'string' ? info : info.description || 'No description available'}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
