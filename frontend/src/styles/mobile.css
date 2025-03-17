@@ -28,7 +28,6 @@
     padding-left: 16px;
     padding-right: 16px;
     max-width: 100% !important;
-    overflow-x: hidden;
   }
 
   /* Improve card layouts */
@@ -250,83 +249,117 @@
   /* AI Parameters Section */
   .ai-parameters {
     padding: 16px;
-    background: var(--background);
-    border-radius: 12px;
-    margin: 16px;
-  }
-
-  .ai-parameters-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    line-height: 1.3;
-  }
-
-  .ai-parameters-description {
-    font-size: 14px;
-    color: var(--muted-foreground);
-    margin-bottom: 16px;
-    line-height: 1.5;
-  }
-
-  .ai-parameters-note {
-    background: var(--accent);
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 16px;
-  }
-
-  .ai-parameters-input {
-    width: 100%;
-    height: 48px;
-    border-radius: 24px;
-    padding: 0 16px;
-    font-size: 16px;
-    background: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .ai-parameters-examples {
-    margin-top: 16px;
-  }
-
-  .ai-parameters-example {
-    padding: 12px;
-    border-radius: 8px;
-    background: var(--muted);
-    margin-bottom: 8px;
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: normal;
     overflow-wrap: break-word;
     word-wrap: break-word;
     hyphens: auto;
   }
 
-  .ai-parameters-button {
-    width: 100%;
-    height: 48px;
+  .ai-parameters .suggestion-text {
+    font-size: 14px;
+    line-height: 1.4;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  .ai-parameters .example-goals {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--accent);
+  }
+
+  .ai-parameters .example-goal-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: var(--background);
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  /* Improve mobile navigation */
+  .mobile-nav-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 50;
+  }
+
+  .mobile-nav-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .mobile-menu-button {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: transparent;
+    border: none;
+    color: var(--foreground);
+  }
+
+  .mobile-menu-button:active {
+    background: var(--accent);
+  }
+
+  /* Fix content padding under fixed header */
+  .mobile-content {
+    padding-top: 56px;
+    padding-bottom: 80px;
+    overflow-x: hidden;
+  }
+
+  /* Improve mobile cards and lists */
+  .mobile-card {
+    margin: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--background);
+    border: 1px solid var(--border);
+  }
+
+  .mobile-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mobile-list-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Fix button and input sizes */
+  .mobile-button {
+    min-height: 48px;
+    padding: 12px 20px;
     border-radius: 24px;
+    width: 100%;
     font-size: 16px;
     font-weight: 500;
-    background: var(--primary);
-    color: var(--primary-foreground);
   }
 
-  /* Fix text overflow in general */
-  .text-wrap {
-    white-space: normal;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    hyphens: auto;
-  }
-
-  .text-ellipsis {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .mobile-input {
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    width: 100%;
+    font-size: 16px;
   }
 }
 
