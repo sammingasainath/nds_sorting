@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Moon, Sun, Settings } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { MobileWarning } from '@/components/MobileWarning';
 
 const navItems = [
   {
@@ -35,6 +36,7 @@ export const RootLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <MobileWarning />
       <motion.header
         className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         initial={{ y: -100 }}
