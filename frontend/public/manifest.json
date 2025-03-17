@@ -4,18 +4,31 @@
   "description": "Compare and explore colleges using non-dominated sorting algorithm",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0F172A",
   "theme_color": "#3B82F6",
   "icons": [
     {
       "src": "/college-icon.svg",
       "sizes": "64x64 128x128 256x256",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
       "src": "/favicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Home screen of U.C.H.I.T."
     }
   ]
 } 

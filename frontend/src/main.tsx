@@ -7,6 +7,7 @@ import { SortingHistoryProvider } from '@/contexts/SortingHistoryContext'
 import { LLMProviderContext } from '@/contexts/LLMContext'
 import { ComparisonProvider } from '@/contexts/ComparisonContext'
 import './index.css'
+import './styles/mobile.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
