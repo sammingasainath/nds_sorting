@@ -285,30 +285,30 @@ export const RecursiveSorting: React.FC = () => {
 
     return (
         <Layout>
-            <div className="container mx-auto py-6 space-y-6">
+            <div className="container mx-auto py-4 md:py-6 space-y-4 md:space-y-6 px-2 md:px-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <div className="flex justify-between items-center mb-6">
-                        <TabsList className="grid grid-cols-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
+                        <TabsList className="grid w-full sm:w-auto grid-cols-3">
                             <TabsTrigger value="selection">Selection</TabsTrigger>
                             <TabsTrigger value="results" disabled={sortingResults.length === 0}>Results</TabsTrigger>
                             <TabsTrigger value="insights" disabled={sortingResults.length === 0}>AI Insights</TabsTrigger>
                         </TabsList>
                         
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
                             <AISidebarConfig>
-                                <Button variant="outline" size="sm" className="gap-2">
-                                    <Settings className="h-4 w-4" />
-                                    Configure AI
+                                <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                                    <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span className="hidden xs:inline">Configure</span> AI
                                 </Button>
                             </AISidebarConfig>
                             <Sheet>
                                 <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm" className="gap-2">
-                                        <MessageSquare className="h-4 w-4" />
+                                    <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                                         Chat
                                     </Button>
                                 </SheetTrigger>
-                                <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+                                <SheetContent className="w-full sm:w-[400px] md:w-[540px] overflow-y-auto">
                                     <SheetHeader>
                                         <SheetTitle>AI Assistant</SheetTitle>
                                         <SheetDescription>
@@ -323,8 +323,8 @@ export const RecursiveSorting: React.FC = () => {
                         </div>
                     </div>
 
-                    <TabsContent value="selection" className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <TabsContent value="selection" className="space-y-4 md:space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                             <div className="lg:col-span-2">
                                 <SelectionControls
                                     colleges={colleges}
@@ -339,7 +339,7 @@ export const RecursiveSorting: React.FC = () => {
                                     key={`selection-controls-${currentIterationId}`}
                                 />
                             </div>
-                            <div className="space-y-6">
+                            <div className="space-y-4 md:space-y-6">
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>AI Parameter Recommendations</CardTitle>

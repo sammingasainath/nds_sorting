@@ -2,9 +2,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, Settings } from 'lucide-react';
+import { Moon, Sun, Settings, Menu, X } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { useState } from 'react';
 
 const navItems = [
   {
@@ -32,6 +33,7 @@ const navItems = [
 export const RootLayout = () => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -51,7 +53,8 @@ export const RootLayout = () => {
               <Link to="/" className="leading-relaxed inline-block">U.C.H.I.T. (उचित)</Link>
             </motion.div>
 
-            <nav className="flex items-center gap-6">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-6">
               {navItems.map(({ path, label }) => (
                 <Link
                   key={path}
@@ -83,6 +86,51 @@ export const RootLayout = () => {
                 <span className="sr-only">Toggle theme</span>
               </Button>
             </nav>
+
+            {/* Mobile Navigation */}
+            <div className="flex items-center md:hidden gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+              
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+                  <SheetHeader className="mb-6">
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <nav className="flex flex-col gap-4">
+                    {navItems.map(({ path, label }) => (
+                      <SheetClose asChild key={path}>
+                        <Link
+                          to={path}
+                          className={cn(
+                            'text-base font-medium transition-colors hover:text-primary p-2 rounded-md',
+                            path === location.pathname
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-muted-foreground'
+                          )}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {label}
+                        </Link>
+                      </SheetClose>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </motion.header>

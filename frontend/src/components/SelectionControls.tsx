@@ -35,6 +35,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog";
 import { useCollegeHistory } from '@/hooks/useCollegeHistory';
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SelectionControlsProps {
   colleges: College[];
@@ -395,165 +396,228 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   );
 
   return (
-    <TooltipProvider>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-2 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">Colleges</CardTitle>
-            <CardDescription className="text-base text-muted-foreground">
-              {!isFirstIteration(iterationId) && getPreviouslySelectedColleges(iterationId)
-                ? `Select from ${availableColleges.length} colleges chosen in previous iteration`
-                : "Select the colleges you want to compare"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SelectionControlsHeader
-              title="Colleges"
-              totalCount={availableColleges.length}
-              selectedCount={selectedColleges.length}
-              options={collegeOptions}
-              setOptions={setCollegeOptions}
-              onSelectAll={handleSelectAll}
-              areAllSelected={areAllFilteredCollegesSelected}
-              parameters={parameters}
-              isSubsequentIteration={effectiveIsSubsequentIteration}
-            />
-            <ScrollArea className="h-[400px] mt-4">
-              <Command>
-                <CommandGroup>
-                  {filteredColleges.map((college) => {
-                    const selectable = isCollegeSelectable(college.Name);
-                    return (
-                      <CommandItem
-                        key={college.Name}
-                        onSelect={() => handleCollegeSelect(college)}
-                        className={cn(
-                          "flex items-center justify-between py-3 px-4 cursor-pointer",
-                          selectedColleges.includes(college.Name) && "bg-primary/10"
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className={cn(
-                            "flex h-5 w-5 items-center justify-center rounded-sm border",
-                            isCollegeSelected(college) 
-                              ? "border-primary bg-primary text-primary-foreground" 
-                              : "border-muted-foreground"
-                          )}>
-                            {isCollegeSelected(college) && <Check className="h-3.5 w-3.5" />}
-                          </div>
-                          <span>{college.Name}</span>
-                        </div>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="ml-2"
-                              disabled={!selectable}
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent triggering the CommandItem onSelect
-                                setSelectedCollege(college);
-                              }}
-                            >
-                              <ArrowUpRight className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent onClick={(e) => e.stopPropagation()}>
-                            <DialogHeader>
-                              <DialogTitle>College Details</DialogTitle>
-                              <DialogDescription>
-                                Detailed information about {selectedCollege?.Name}
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedCollege && (
-                              <CollegeDetails 
-                                college={selectedCollege} 
-                                onClose={() => setSelectedCollege(null)} 
-                              />
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      </CommandItem>
-                    );
+    <div className="space-y-4 md:space-y-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg flex items-center justify-between">
+            <span>College Selection</span>
+            <span className="text-xs sm:text-sm font-normal text-muted-foreground">
+              {selectedColleges.length} selected
+            </span>
+          </CardTitle>
+          <CardDescription>
+            {isSubsequent ? 
+              "Select colleges from your previous iteration to continue sorting." : 
+              "Select colleges to include in the sorting process."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pb-3">
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+            <div className="flex flex-1 gap-2">
+              <Command className="rounded-lg border shadow-md flex-1">
+                <input
+                  placeholder="Search colleges..."
+                  value={collegeOptions.searchQuery}
+                  onChange={(e) => setCollegeOptions({
+                    ...collegeOptions,
+                    searchQuery: e.target.value
                   })}
-                </CommandGroup>
+                  className="flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                />
               </Command>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            </div>
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+              <select
+                value={collegeOptions.filterBy}
+                onChange={(e) => setCollegeOptions({
+                  ...collegeOptions,
+                  filterBy: e.target.value as any
+                })}
+                className="flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 min-w-[100px]"
+              >
+                <option value="all">All</option>
+                <option value="selected">Selected</option>
+                <option value="unselected">Unselected</option>
+              </select>
+              <select
+                value={collegeOptions.sortBy}
+                onChange={(e) => setCollegeOptions({
+                  ...collegeOptions,
+                  sortBy: e.target.value as any
+                })}
+                className="flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 min-w-[100px]"
+              >
+                <option value="original">Original</option>
+                <option value="alphabetical">A-Z</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-between items-center mb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+              className="text-xs sm:text-sm"
+            >
+              {filteredColleges.every(college => selectedColleges.includes(college.Name)) ? 
+                "Deselect All" : "Select All"}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Showing {filteredColleges.length} of {availableColleges.length} colleges
+            </span>
+          </div>
+          <ScrollArea className="h-[300px] sm:h-[400px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {filteredColleges.map(college => {
+                const isSelected = selectedColleges.includes(college.Name);
+                const isDisabled = !isCollegeSelectable(college.Name);
+                
+                return (
+                  <div
+                    key={college.Name}
+                    className={cn(
+                      "flex items-center space-x-2 p-2 rounded border",
+                      isSelected ? "bg-primary/10 border-primary" : "hover:bg-accent",
+                      isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    )}
+                    onClick={() => !isDisabled && handleCollegeSelect(college)}
+                  >
+                    <Checkbox 
+                      checked={isSelected}
+                      disabled={isDisabled}
+                      className="pointer-events-none"
+                    />
+                    <div className="flex-1 truncate">
+                      <span className="font-medium block truncate">{college.Name}</span>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCollege(college);
+                          }}
+                        >
+                          <Info className="h-3 w-3" />
+                          <span className="sr-only">College details</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md max-h-[90vh] overflow-auto">
+                        <DialogHeader>
+                          <DialogTitle>{college.Name}</DialogTitle>
+                        </DialogHeader>
+                        <CollegeDetails college={college} />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
-        <Card className="border-2 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">Parameters</CardTitle>
-            <CardDescription className="text-base text-muted-foreground">
-              Choose the parameters for comparison
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SelectionControlsHeader
-              title="Parameters"
-              totalCount={parameters.length}
-              selectedCount={selectedParameters.length}
-              options={parameterOptions}
-              setOptions={setParameterOptions}
-              onSelectAll={toggleAllParameters}
-              areAllSelected={areAllFilteredParametersSelected}
-              parameters={parameters}
-            />
-            <ScrollArea className="h-[400px] mt-4">
-              <Command>
-                {Object.entries(categorizedParameters).map(([category, params]) => (
-                  params.length > 0 && (
-                    <CommandGroup key={category} heading={category}>
-                      {params
-                        .filter(param => {
-                          if (parameterOptions.searchQuery) {
-                            const search = parameterOptions.searchQuery.toLowerCase();
-                            const info = parameterInfo[param];
-                            return param.toLowerCase().includes(search) || 
-                                  (info && info.description && info.description.toLowerCase().includes(search));
-                          }
-                          return true;
-                        })
-                        .map((param) => (
-                          <CommandItem
-                            key={param}
-                            onSelect={() => toggleParameter(param)}
-                            className="flex items-center justify-between py-3 px-4 cursor-pointer"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={cn(
-                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
-                                  selectedParameters.includes(param)
-                                    ? "bg-primary border-primary"
-                                    : "border-muted-foreground"
-                                )}
-                              >
-                                {selectedParameters.includes(param) && (
-                                  <Check className="h-3 w-3 text-primary-foreground" />
-                                )}
-                              </div>
-                              <div className="flex flex-col">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 rounded-full ${getCategoryColor(param)}`}></div>
-                                  <span className="font-medium">{getParameterFullName(param)}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground ml-4">
-                                  {renderParameterTooltip(param)}
-                                </span>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  )
-                ))}
+      {/* Parameter Selection Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg flex items-center justify-between">
+            <span>Parameter Selection</span>
+            <span className="text-xs sm:text-sm font-normal text-muted-foreground">
+              {selectedParameters.length} selected
+            </span>
+          </CardTitle>
+          <CardDescription>
+            Select parameters to use for sorting colleges.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pb-3">
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+            <div className="flex flex-1 gap-2">
+              <Command className="rounded-lg border shadow-md flex-1">
+                <input
+                  placeholder="Search parameters..."
+                  value={parameterOptions.searchQuery}
+                  onChange={(e) => setParameterOptions({
+                    ...parameterOptions,
+                    searchQuery: e.target.value
+                  })}
+                  className="flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                />
               </Command>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-    </TooltipProvider>
+            </div>
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+              <select
+                value={parameterOptions.filterBy}
+                onChange={(e) => setParameterOptions({
+                  ...parameterOptions,
+                  filterBy: e.target.value as any
+                })}
+                className="flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 min-w-[100px]"
+              >
+                <option value="all">All</option>
+                <option value="selected">Selected</option>
+                <option value="unselected">Unselected</option>
+              </select>
+              <select
+                value={parameterOptions.sortBy}
+                onChange={(e) => setParameterOptions({
+                  ...parameterOptions,
+                  sortBy: e.target.value as any
+                })}
+                className="flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 min-w-[100px]"
+              >
+                <option value="original">Original</option>
+                <option value="alphabetical">A-Z</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-between items-center mb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleAllParameters}
+              className="text-xs sm:text-sm"
+            >
+              {filteredParameters.every(param => selectedParameters.includes(param)) ? 
+                "Deselect All" : "Select All"}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Showing {filteredParameters.length} of {parameters.length} parameters
+            </span>
+          </div>
+          <ScrollArea className="h-[200px] sm:h-[300px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {filteredParameters.map(parameter => {
+                const isSelected = selectedParameters.includes(parameter);
+                
+                return (
+                  <div
+                    key={parameter}
+                    className={cn(
+                      "flex items-center space-x-2 p-2 rounded border cursor-pointer",
+                      isSelected ? "bg-primary/10 border-primary" : "hover:bg-accent"
+                    )}
+                    onClick={() => toggleParameter(parameter)}
+                  >
+                    <Checkbox 
+                      checked={isSelected}
+                      className="pointer-events-none"
+                    />
+                    <div className="flex-1 truncate">
+                      <TooltipProvider>
+                        {renderParameterTooltip(parameter)}
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
   );
 }; 
