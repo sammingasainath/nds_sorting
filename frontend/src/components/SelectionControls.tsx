@@ -485,7 +485,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
                     <Checkbox 
                       checked={isSelected}
                       disabled={isDisabled}
-                      className="pointer-events-none"
+                      className="pointer-events-none h-5 w-5 sm:h-4 sm:w-4"
                     />
                     <div className="flex-1 truncate">
                       <span className="font-medium block truncate">{college.Name}</span>
@@ -495,13 +495,13 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-6 w-6 rounded-full"
+                          className="h-8 w-8 sm:h-6 sm:w-6 rounded-full"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedCollege(college);
                           }}
                         >
-                          <Info className="h-3 w-3" />
+                          <Info className="h-5 w-5 sm:h-3 sm:w-3" />
                           <span className="sr-only">College details</span>
                         </Button>
                       </DialogTrigger>
@@ -588,8 +588,86 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
               Showing {filteredParameters.length} of {parameters.length} parameters
             </span>
           </div>
-          <ScrollArea className="h-[200px] sm:h-[300px]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <ScrollArea className="h-[300px] sm:h-[300px]">
+            {/* Mobile: Show categorized parameters */}
+            <div className="block sm:hidden space-y-4">
+              {Object.entries(categorizedParameters).map(([category, params]) => (
+                params.length > 0 && (
+                  <div key={category} className="space-y-2">
+                    <h3 className="text-sm font-semibold">{category}</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {params
+                        .filter(param => {
+                          if (parameterOptions.searchQuery) {
+                            const search = parameterOptions.searchQuery.toLowerCase();
+                            return param.toLowerCase().includes(search);
+                          }
+                          if (parameterOptions.filterBy === 'selected') {
+                            return selectedParameters.includes(param);
+                          } else if (parameterOptions.filterBy === 'unselected') {
+                            return !selectedParameters.includes(param);
+                          }
+                          return true;
+                        })
+                        .map(parameter => {
+                          const isSelected = selectedParameters.includes(parameter);
+                          const info = parameterInfo[parameter];
+                          
+                          return (
+                            <div
+                              key={parameter}
+                              className={cn(
+                                "flex items-center space-x-2 p-2 rounded border cursor-pointer",
+                                isSelected ? "bg-primary/10 border-primary" : "hover:bg-accent"
+                              )}
+                              onClick={() => toggleParameter(parameter)}
+                            >
+                              <Checkbox 
+                                checked={isSelected}
+                                className="pointer-events-none h-5 w-5 sm:h-4 sm:w-4"
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${getCategoryColor(parameter)}`}></div>
+                                  <span className="font-medium truncate">{parameter}</span>
+                                </div>
+                                {info && (
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-6 px-2 text-xs text-muted-foreground"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        View details
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-md">
+                                      <DialogHeader>
+                                        <DialogTitle>{info.fullName || parameter}</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="space-y-2 mt-2">
+                                        <p>{info.description}</p>
+                                        {info.weight && <p><strong>Weight:</strong> {info.weight}</p>}
+                                        {info.formula && <p><strong>Formula:</strong> {info.formula}</p>}
+                                        {info.category && <p><strong>Category:</strong> {info.category}</p>}
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+            
+            {/* Desktop: Show simple parameter list with tooltips */}
+            <div className="hidden sm:grid sm:grid-cols-2 gap-2">
               {filteredParameters.map(parameter => {
                 const isSelected = selectedParameters.includes(parameter);
                 

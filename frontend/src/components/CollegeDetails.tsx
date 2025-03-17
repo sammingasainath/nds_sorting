@@ -856,22 +856,17 @@ export const CollegeDetails: React.FC<CollegeDetailsProps> = ({
         </CardHeader>
       </motion.div>
       <CardContent className="px-6 pb-6">
-        <Tabs defaultValue="general" className="w-full" onValueChange={setActiveTab}>
-          <motion.div 
-            className="sticky top-[85px] z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <TabsList className="grid grid-cols-6 w-full">
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="campus">Campus</TabsTrigger>
-              <TabsTrigger value="reddit">Reddit</TabsTrigger>
-              <TabsTrigger value="youtube">YouTube</TabsTrigger>
-              <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-              <TabsTrigger value="quora">Quora</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="overflow-x-auto pb-2 -mx-1 px-1">
+            <TabsList className="w-full sm:w-auto flex sm:inline-flex flex-nowrap">
+              <TabsTrigger value="general" className="flex-shrink-0">General</TabsTrigger>
+              <TabsTrigger value="campus" className="flex-shrink-0">Campus</TabsTrigger>
+              <TabsTrigger value="reddit" className="flex-shrink-0">Reddit</TabsTrigger>
+              <TabsTrigger value="youtube" className="flex-shrink-0">YouTube</TabsTrigger>
+              <TabsTrigger value="linkedin" className="flex-shrink-0">LinkedIn</TabsTrigger>
+              <TabsTrigger value="quora" className="flex-shrink-0">Quora</TabsTrigger>
             </TabsList>
-          </motion.div>
+          </div>
 
           <div className="mt-6">
           <AnimatePresence mode="sync" initial={false}>
