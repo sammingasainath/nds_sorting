@@ -37,7 +37,6 @@ import { College } from '@/types';
 import { parameterInfo } from '@/lib/parameterInfo';
 import { Badge } from "@/components/ui/badge";
 import { useCollegeHistory } from '@/hooks/useCollegeHistory';
-import { Button } from "@/components/ui/button";
 
 interface CollegeComparisonProps {
   colleges: College[];
@@ -182,43 +181,6 @@ export const CollegeComparison: React.FC<CollegeComparisonProps> = ({
     };
   });
 
-  // Find the visualization type selector and update it for mobile
-  // Look for a section with tabs or buttons for different visualization types
-
-  // Find something like:
-  <div className="flex space-x-2">
-    <Button variant={visualizationType === 'radar' ? 'default' : 'outline'}>Radar Chart</Button>
-    <Button variant={visualizationType === 'bar' ? 'default' : 'outline'}>Bar Chart</Button>
-    <Button variant={visualizationType === 'table' ? 'default' : 'outline'}>Detailed Table</Button>
-  </div>
-
-  // Replace with:
-  <div className="overflow-x-auto pb-2 -mx-1 px-1">
-    <div className="flex space-x-2 flex-nowrap">
-      <Button 
-        variant={visualizationType === 'radar' ? 'default' : 'outline'}
-        onClick={() => setVisualizationType('radar')}
-        className="flex-shrink-0 whitespace-nowrap"
-      >
-        Radar Chart
-      </Button>
-      <Button 
-        variant={visualizationType === 'bar' ? 'default' : 'outline'}
-        onClick={() => setVisualizationType('bar')}
-        className="flex-shrink-0 whitespace-nowrap"
-      >
-        Bar Chart
-      </Button>
-      <Button 
-        variant={visualizationType === 'table' ? 'default' : 'outline'}
-        onClick={() => setVisualizationType('table')}
-        className="flex-shrink-0 whitespace-nowrap"
-      >
-        Detailed Table
-      </Button>
-    </div>
-  </div>
-
   return (
     <Card className="w-full border-2 bg-card/50 backdrop-blur-sm shadow-lg">
       <CardHeader className="border-b border-border">
@@ -229,15 +191,13 @@ export const CollegeComparison: React.FC<CollegeComparisonProps> = ({
       </CardHeader>
       <CardContent className="p-6">
         <Tabs defaultValue="radar" className="space-y-6">
-          <div className="overflow-x-auto -mx-1 px-1 mb-6">
-            <TabsList className="w-full sm:grid sm:grid-cols-5 flex flex-nowrap p-1 bg-card/50 border border-border rounded-lg">
-              <TabsTrigger value="radar" className="flex-shrink-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Radar Chart</TabsTrigger>
-              <TabsTrigger value="bar" className="flex-shrink-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Bar Chart</TabsTrigger>
-              <TabsTrigger value="strengths" className="flex-shrink-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Strengths</TabsTrigger>
-              <TabsTrigger value="matrix" className="flex-shrink-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Head-to-Head</TabsTrigger>
-              <TabsTrigger value="table" className="flex-shrink-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Table</TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="w-full grid grid-cols-5 mb-6 p-1 bg-card/50 border border-border rounded-lg">
+            <TabsTrigger value="radar" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Radar Chart</TabsTrigger>
+            <TabsTrigger value="bar" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Bar Chart</TabsTrigger>
+            <TabsTrigger value="strengths" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Strengths Analysis</TabsTrigger>
+            <TabsTrigger value="matrix" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Head-to-Head Matrix</TabsTrigger>
+            <TabsTrigger value="table" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-sm">Detailed Table</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="radar" className="space-y-4">
             <div className="flex flex-col gap-2">

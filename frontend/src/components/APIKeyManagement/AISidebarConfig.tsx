@@ -26,8 +26,8 @@ export const AISidebarConfig: React.FC<AISidebarConfigProps> = ({ children }) =>
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto px-6">
-        <SheetHeader className="px-0">
+      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+        <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-500" />
             AI Configuration
@@ -37,7 +37,7 @@ export const AISidebarConfig: React.FC<AISidebarConfigProps> = ({ children }) =>
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 px-0">
+        <div className="mt-6">
           <div className="p-3 mb-4 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm rounded-md border border-amber-200 dark:border-amber-900">
             <p className="font-medium">This application offers AI-powered features:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
