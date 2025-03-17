@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -6,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Moon, Sun, Settings } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useMobileDetect } from '@/hooks/useMobileDetect';
-import { MobileLayout } from './MobileLayout';
 
 const navItems = [
   {
@@ -35,27 +32,6 @@ const navItems = [
 export const RootLayout = () => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const isMobile = useMobileDetect();
-
-  // Get the page title based on the current route
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path === '/') return 'Home';
-    if (path === '/history') return 'History';
-    if (path.startsWith('/history/')) return 'History Details';
-    if (path === '/search') return 'Search';
-    if (path === '/compare') return 'Compare';
-    if (path === '/settings') return 'Settings';
-    return 'U.C.H.I.T. (उचित)';
-  };
-
-  if (isMobile) {
-    return (
-      <MobileLayout title={getPageTitle()}>
-        <Outlet />
-      </MobileLayout>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
