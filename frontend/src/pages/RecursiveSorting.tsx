@@ -367,7 +367,7 @@ export const RecursiveSorting: React.FC = () => {
                         </div>
                     </div>
 
-                    <TabsContent value="selection" className="space-y-6">
+                    <TabsContent value="selection">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2">
                                 <SelectionControls
@@ -385,16 +385,16 @@ export const RecursiveSorting: React.FC = () => {
                                     key={`selection-controls-${currentIterationId}`}
                                 />
                             </div>
-                        </TabsContent>
+                        </div>
+                    </TabsContent>
 
-                        <TabsContent value="results" className="space-y-6">
-                            {/* Results content */}
-                        </TabsContent>
+                    <TabsContent value="results" className="space-y-6">
+                        {/* Results content */}
+                    </TabsContent>
 
-                        <TabsContent value="insights" className="space-y-6">
-                            {/* Insights content */}
-                        </TabsContent>
-                    </Tabs>
+                    <TabsContent value="insights" className="space-y-6">
+                        {/* Insights content */}
+                    </TabsContent>
                 </Tabs>
             </div>
         </Layout>
