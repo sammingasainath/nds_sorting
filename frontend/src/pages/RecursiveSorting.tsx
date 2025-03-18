@@ -385,15 +385,74 @@ export const RecursiveSorting: React.FC = () => {
                                     key={`selection-controls-${currentIterationId}`}
                                 />
                             </div>
+                            <div className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>AI Parameter Suggestions</CardTitle>
+                                        <CardDescription>
+                                            Get personalized parameter suggestions based on your selected colleges
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ParameterSuggestion
+                                            selectedColleges={selectedColleges}
+                                            onParameterSelect={setSelectedParameters}
+                                            selectedParameters={selectedParameters}
+                                        />
+                                    </CardContent>
+                                </Card>
+                                <Button
+                                    onClick={handleStartSort}
+                                    disabled={!canStartSort}
+                                    className="w-full gap-2"
+                                >
+                                    <Play className="h-4 w-4" />
+                                    Start Sorting
+                                </Button>
+                            </div>
                         </div>
                     </TabsContent>
 
                     <TabsContent value="results" className="space-y-6">
-                        {/* Results content */}
+                        <ParetoVisualization
+                            results={sortingResults}
+                            onCollegeSelect={setSelectedForNextIteration}
+                            selectedColleges={selectedForNextIteration}
+                        />
+                        <div className="flex justify-end gap-4">
+                            <Button
+                                onClick={handleStartNewIterationClick}
+                                disabled={selectedForNextIteration.length === 0}
+                                className="gap-2"
+                            >
+                                <Play className="h-4 w-4" />
+                                Start New Iteration with Selected
+                            </Button>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="insights" className="space-y-6">
-                        {/* Insights content */}
+                        {needsApiKey ? (
+                            <ProviderSelector onComplete={() => setNeedsApiKey(false)} />
+                        ) : (
+                            <>
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={generateInsights}
+                                        disabled={isGeneratingInsight || !sortingResults.length}
+                                        className="gap-2"
+                                    >
+                                        {isGeneratingInsight ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="h-4 w-4" />
+                                        )}
+                                        Generate Insights
+                                    </Button>
+                                </div>
+                                {collegeInsight && <InsightCard insight={collegeInsight} />}
+                            </>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>
