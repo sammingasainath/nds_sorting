@@ -8,28 +8,45 @@ interface SortingHistoryContextType {
     setCurrentEntry: (id: string | null) => void;
 }
 
-const SortingHistoryContext = createContext<SortingHistoryContextType | undefined>(undefined);
+const initialState: SortingHistoryState = {
+    entries: {},
+    currentEntryId: null
+};
+
+const SortingHistoryContext = createContext<SortingHistoryContextType>({
+    history: initialState,
+    addEntry: () => '',
+    getEntry: () => undefined,
+    setCurrentEntry: () => {}
+});
 
 const STORAGE_KEY = 'sorting-history';
 
 export const SortingHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [history, setHistory] = useState<SortingHistoryState>(() => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            try {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
                 const parsed = JSON.parse(stored);
                 console.log('Loaded sorting history from localStorage on mount:', parsed);
-                return parsed;
-            } catch (e) {
-                console.error('Failed to parse sorting history from localStorage:', e);
+                return {
+                    entries: parsed.entries || {},
+                    currentEntryId: parsed.currentEntryId || null
+                };
             }
+        } catch (e) {
+            console.error('Failed to parse sorting history from localStorage:', e);
         }
-        return { entries: {}, currentEntryId: null };
+        return initialState;
     });
 
     useEffect(() => {
-        console.log('Saved sorting history to localStorage:', history);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+        try {
+            console.log('Saved sorting history to localStorage:', history);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+        } catch (e) {
+            console.error('Failed to save sorting history to localStorage:', e);
+        }
     }, [history]);
 
     const addEntry = useCallback((entry: Omit<SortingHistoryEntry, "id" | "timestamp">) => {
@@ -66,13 +83,15 @@ export const SortingHistoryProvider: React.FC<{ children: React.ReactNode }> = (
         }));
     }, []);
 
+    const value = {
+        history,
+        addEntry,
+        getEntry,
+        setCurrentEntry
+    };
+
     return (
-        <SortingHistoryContext.Provider value={{
-            history,
-            addEntry,
-            getEntry,
-            setCurrentEntry
-        }}>
+        <SortingHistoryContext.Provider value={value}>
             {children}
         </SortingHistoryContext.Provider>
     );
@@ -80,7 +99,7 @@ export const SortingHistoryProvider: React.FC<{ children: React.ReactNode }> = (
 
 export const useSortingHistory = () => {
     const context = useContext(SortingHistoryContext);
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useSortingHistory must be used within a SortingHistoryProvider');
     }
     return context;

@@ -26,6 +26,6 @@ export interface SortingHistoryEntry {
 }
 
 export interface SortingHistoryState {
-    entries: SortingHistoryEntry[];
+    entries: Record<string, SortingHistoryEntry>;
     currentEntryId: string | null;
 } 

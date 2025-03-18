@@ -41,7 +41,7 @@ export const RecursiveSorting: React.FC = () => {
     const { saveIteration, isFirstIteration } = useCollegeHistory();
     
     // Add sorting history context
-    const { addSorting, state: sortingHistoryState } = useSortingHistory();
+    const { history, addEntry, getEntry } = useSortingHistory();
 
     // Add iteration state
     const [currentIterationId, setCurrentIterationId] = useState<string>(() => 
@@ -127,7 +127,33 @@ export const RecursiveSorting: React.FC = () => {
         runSorting();
     }, [selectedColleges, selectedParameters, runSorting, colleges]);
 
-    // Effect to switch to Results tab after sorting is complete
+    // Effect to handle restored entry data
+    React.useEffect(() => {
+        if (!history?.currentEntryId || !history?.entries) return;
+        
+        const entry = history.entries[history.currentEntryId];
+        if (!entry) return;
+
+        console.log('Loading restored entry data:', entry);
+        
+        // Set selected colleges and parameters
+        setSelectedColleges(entry.selectedColleges);
+        setSelectedParameters(entry.selectedParameters);
+        
+        // Set sorting results
+        setSortingResults(entry.sortingResults);
+        
+        // Switch to results tab if there are sorting results
+        if (entry.sortingResults.length > 0) {
+            console.log('Switching to results tab due to restored entry');
+            setActiveTab("results");
+        } else {
+            console.log('Switching to selection tab due to restored entry');
+            setActiveTab("selection");
+        }
+    }, [history?.currentEntryId, history?.entries]);
+
+    // Update the sorting results effect
     React.useEffect(() => {
         if (sortingResults.length > 0) {
             console.log('SORTING RESULTS DETECTED - SWITCHING TO RESULTS TAB');
@@ -140,14 +166,14 @@ export const RecursiveSorting: React.FC = () => {
                 sortingResults
             });
             
-            addSorting({
+            addEntry({
                 parentId: null,
                 selectedColleges,
                 selectedParameters,
                 sortingResults
             });
         }
-    }, [sortingResults, selectedColleges, selectedParameters, addSorting]);
+    }, [sortingResults, selectedColleges, selectedParameters, addEntry]);
 
     // Generate insights only when explicitly requested
     const generateInsights = async () => {
@@ -246,31 +272,6 @@ export const RecursiveSorting: React.FC = () => {
     };
 
     const canStartSort = selectedColleges.length > 0 && selectedParameters.length > 0;
-
-    // Load restored entry data when component mounts or when current entry ID changes
-    React.useEffect(() => {
-        const currentEntryId = sortingHistoryState.currentEntryId;
-        if (currentEntryId && sortingHistoryState.entries[currentEntryId]) {
-            console.log('Loading restored entry data:', currentEntryId);
-            const entry = sortingHistoryState.entries[currentEntryId];
-            
-            // Set selected colleges and parameters
-            setSelectedColleges(entry.selectedColleges);
-            setSelectedParameters(entry.selectedParameters);
-            
-            // Set sorting results
-            setSortingResults(entry.sortingResults);
-            
-            // Switch to results tab if there are sorting results
-            if (entry.sortingResults.length > 0) {
-                console.log('Switching to results tab due to restored entry');
-                setActiveTab("results");
-            } else {
-                console.log('Switching to selection tab due to restored entry');
-                setActiveTab("selection");
-            }
-        }
-    }, [sortingHistoryState.currentEntryId, sortingHistoryState.entries, setSelectedColleges, setSelectedParameters, setSortingResults]);
 
     // Add iteration to history when starting new iteration
     useEffect(() => {
