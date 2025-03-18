@@ -382,4 +382,21 @@ export const RecursiveSorting: React.FC = () => {
                                     isSubsequentIteration={isSubsequentIteration}
                                     collegeOptions={collegeOptions}
                                     setCollegeOptions={setCollegeOptions}
-                                    key={`selection-controls-${currentIterationId}`
+                                    key={`selection-controls-${currentIterationId}`}
+                                />
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="results" className="space-y-6">
+                            {/* Results content */}
+                        </TabsContent>
+
+                        <TabsContent value="insights" className="space-y-6">
+                            {/* Insights content */}
+                        </TabsContent>
+                    </Tabs>
+                </Tabs>
+            </div>
+        </Layout>
+    );
+};
