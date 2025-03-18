@@ -343,6 +343,39 @@ export const RecursiveSorting: React.FC = () => {
         }
     }, [currentIterationId, selectedColleges.length, sortingResults]);
 
+    // Add handleReset function
+    const handleReset = useCallback(() => {
+        console.log('Resetting all state...');
+        
+        // Clear selections
+        setSelectedColleges([]);
+        setSelectedParameters([]);
+        setSortingResults([]);
+        setSelectedForNextIteration([]);
+        
+        // Reset iteration state
+        const newIterationId = `iteration-${Date.now()}`;
+        setCurrentIterationId(newIterationId);
+        setIsSubsequentIteration(false);
+        
+        // Clear history
+        setIterationHistory([]);
+        
+        // Clear localStorage flags
+        localStorage.removeItem('hasCompletedFirstIteration');
+        localStorage.removeItem('collegeIterationHistory');
+        
+        // Switch to selection tab
+        setActiveTab("selection");
+        
+        // Reset sorting history if available
+        if (resetState) {
+            resetState();
+        }
+
+        console.log('Reset complete');
+    }, [resetState]);
+
     if (loading) {
         return (
             <Layout>

@@ -28,4 +28,12 @@ export interface SortingHistoryEntry {
 export interface SortingHistoryState {
     entries: Record<string, SortingHistoryEntry>;
     currentEntryId: string | null;
+}
+
+export interface CollegeCardProps {
+    college: College;
+    isSelected?: boolean;
+    onSelect?: (collegeId: string) => void;
+    showDetails?: boolean;
+    onToggleDetails?: (collegeId: string) => void;
 } 
