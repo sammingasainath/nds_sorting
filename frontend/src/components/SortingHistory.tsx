@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSortingHistory } from '@/contexts/SortingHistoryContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, History, ArrowRight, Clock } from 'lucide-react';
+import { ArrowLeft, History } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -109,75 +109,90 @@ export const SortingHistory: React.FC<SortingHistoryProps> = ({
 
 // Component for the history page
 export const SortingHistoryView: React.FC = () => {
-  const { history } = useSortingHistory();
+  const { state, restoreEntry } = useSortingHistory();
   const navigate = useNavigate();
 
   const sortedEntries = React.useMemo(() => {
-    return Object.values(history.entries)
+    return Object.values(state.entries)
       .sort((a, b) => b.timestamp - a.timestamp);
-  }, [history.entries]);
+  }, [state.entries]);
 
   const handleRestore = (entryId: string) => {
-    navigate('/explore', { state: { restoreId: entryId } });
+    console.log('Restoring entry and navigating to explore page:', entryId);
+    restoreEntry(entryId);
+    // Navigate to the explore page
+    navigate('/explore');
   };
 
   if (sortedEntries.length === 0) {
     return (
-      <Card>
+      <Card className="border-2">
         <CardHeader>
-          <CardTitle>No History</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Sorting History
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            You haven't performed any sorting operations yet.
-          </p>
-          <Button
-            className="mt-4"
-            onClick={() => navigate('/explore')}
-          >
-            Start Sorting
-          </Button>
+        <CardContent className="text-sm text-muted-foreground">
+          No sorting history yet. Start by selecting colleges and parameters.
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {sortedEntries.map((entry) => (
-        <Card key={entry.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                Sorting #{entry.id.slice(0, 8)}
-              </CardTitle>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="mr-1 h-4 w-4" />
-                {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <span className="font-medium">Selected Colleges:</span>{' '}
-                {entry.selectedColleges.length}
-              </div>
-              <div>
-                <span className="font-medium">Parameters:</span>{' '}
-                {entry.selectedParameters.join(', ')}
-              </div>
-              <Button
-                className="mt-4 w-full sm:w-auto"
-                onClick={() => handleRestore(entry.id)}
+    <Card className="border-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <History className="h-5 w-5" />
+          Sorting History
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            {sortedEntries.map((entry) => (
+              <Card 
+                key={entry.id}
+                className={`border ${
+                  entry.id === state.currentEntryId
+                    ? "border-primary"
+                    : "border-border"
+                }`}
               >
-                Restore This Sort
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                <CardHeader className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">
+                        Sorting #{sortedEntries.length - sortedEntries.indexOf(entry)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
+                      </p>
+                    </div>
+                    {entry.id !== state.currentEntryId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1"
+                        onClick={() => handleRestore(entry.id)}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Restore
+                      </Button>
+                    )}
+                  </div>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <p>Colleges: {entry.selectedColleges.length}</p>
+                    <p>Parameters: {entry.selectedParameters.length}</p>
+                    <p>Fronts: {Math.max(...entry.sortingResults.map(r => r.frontNumber))}</p>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }; 

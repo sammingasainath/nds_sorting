@@ -1,55 +1,47 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { College } from '@/types';
 
 interface ComparisonContextType {
-  selectedColleges: College[];
-  addCollege: (college: College) => void;
-  removeCollege: (collegeId: string) => void;
+  selectedForComparison: string[];
+  addToComparison: (collegeName: string) => void;
+  removeFromComparison: (collegeName: string) => void;
   clearComparison: () => void;
-  isCollegeSelected: (collegeId: string) => boolean;
 }
 
 const ComparisonContext = createContext<ComparisonContextType | undefined>(undefined);
 
 export const ComparisonProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedColleges, setSelectedColleges] = useState<College[]>([]);
+  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
 
-  const addCollege = useCallback((college: College) => {
-    setSelectedColleges(prev => {
-      // Check if college is already selected
-      if (prev.some(c => c['Unnamed: 0'] === college['Unnamed: 0'])) {
-        return prev;
-      }
-      return [...prev, college];
+  const addToComparison = useCallback((collegeName: string) => {
+    setSelectedForComparison(prev => {
+      if (prev.includes(collegeName)) return prev;
+      return [...prev, collegeName];
     });
   }, []);
 
-  const removeCollege = useCallback((collegeId: string) => {
-    setSelectedColleges(prev => prev.filter(c => c['Unnamed: 0'] !== collegeId));
+  const removeFromComparison = useCallback((collegeName: string) => {
+    setSelectedForComparison(prev => prev.filter(name => name !== collegeName));
   }, []);
 
   const clearComparison = useCallback(() => {
-    setSelectedColleges([]);
+    setSelectedForComparison([]);
   }, []);
 
-  const isCollegeSelected = useCallback((collegeId: string) => {
-    return selectedColleges.some(c => c['Unnamed: 0'] === collegeId);
-  }, [selectedColleges]);
-
   return (
-    <ComparisonContext.Provider value={{
-      selectedColleges,
-      addCollege,
-      removeCollege,
-      clearComparison,
-      isCollegeSelected
-    }}>
+    <ComparisonContext.Provider
+      value={{
+        selectedForComparison,
+        addToComparison,
+        removeFromComparison,
+        clearComparison
+      }}
+    >
       {children}
     </ComparisonContext.Provider>
   );
 };
 
-export const useComparison = () => {
+export const useComparison = (): ComparisonContextType => {
   const context = useContext(ComparisonContext);
   if (context === undefined) {
     throw new Error('useComparison must be used within a ComparisonProvider');

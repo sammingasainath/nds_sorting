@@ -10,22 +10,20 @@ export interface ParetoFront {
 }
 
 export interface NonDominatedSortingResult {
-    college: College;
     frontNumber: number;
-    dominatedBy: string[];
-    dominates: string[];
+    college: College;
 }
 
 export interface SortingHistoryEntry {
     id: string;
-    parentId: string | null;
+    timestamp: number;
     selectedColleges: string[];
     selectedParameters: string[];
     sortingResults: NonDominatedSortingResult[];
-    timestamp: number;
+    parentId?: string; // Reference to the previous sorting in the chain
 }
 
 export interface SortingHistoryState {
-    entries: Record<string, SortingHistoryEntry>;
+    entries: SortingHistoryEntry[];
     currentEntryId: string | null;
 } 
