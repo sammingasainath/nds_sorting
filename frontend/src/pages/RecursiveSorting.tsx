@@ -273,67 +273,14 @@ export const RecursiveSorting: React.FC = () => {
 
     const canStartSort = selectedColleges.length > 0 && selectedParameters.length > 0;
 
-    // Update the getPreviouslySelectedColleges function
-    const getPreviouslySelectedColleges = useCallback((iterationId: string) => {
-        const entry = history.entries[iterationId];
-        if (!entry) {
-            console.log('No entry found for iteration:', iterationId);
-            return null;
-        }
-
-        console.log('Found entry for iteration:', entry);
-        return entry.selectedColleges;
-    }, [history.entries]);
-
-    // Update the handleIterationClick function
-    const handleIterationClick = useCallback((iterationId: string) => {
-        console.log('Handling iteration click:', iterationId);
-        
-        // Get the entry from history
-        const entry = history.entries[iterationId];
-        if (!entry) {
-            console.log('No entry found for iteration:', iterationId);
-            return;
-        }
-
-        console.log('Found entry:', entry);
-
-        // Set the selected colleges and parameters
-        setSelectedColleges(entry.selectedColleges);
-        setSelectedParameters(entry.selectedParameters);
-        
-        // Set the current iteration ID
-        setCurrentIterationId(iterationId);
-        
-        // Set the sorting results
-        setSortingResults(entry.sortingResults);
-        
-        // Set subsequent iteration flag
-        setIsSubsequentIteration(true);
-        
-        // Switch to selection tab if no results, otherwise switch to results
-        if (entry.sortingResults.length > 0) {
-            setActiveTab("results");
-        } else {
-            setActiveTab("selection");
-        }
-
-        console.log('State updated for iteration:', {
-            iterationId,
-            selectedColleges: entry.selectedColleges,
-            selectedParameters: entry.selectedParameters,
-            sortingResults: entry.sortingResults
-        });
-    }, [history.entries]);
-
-    // Update the useEffect for iteration history
+    // Add iteration to history when starting new iteration
     useEffect(() => {
-        if (sortingResults.length > 0) {
-            // Add current iteration to history if not already present
+        if (currentIterationId && selectedColleges.length > 0) {
             setIterationHistory(prev => {
-                const existingIteration = prev.find(it => it.id === currentIterationId);
-                if (existingIteration) return prev;
-
+                // Check if this iteration is already in history
+                if (prev.some(it => it.id === currentIterationId)) {
+                    return prev;
+                }
                 return [...prev, {
                     id: currentIterationId,
                     collegeCount: selectedColleges.length,
@@ -341,21 +288,17 @@ export const RecursiveSorting: React.FC = () => {
                 }];
             });
         }
-    }, [currentIterationId, selectedColleges.length, sortingResults]);
+    }, [currentIterationId, selectedColleges]);
 
-    // Add handleReset function
-    const handleReset = useCallback(() => {
-        console.log('Resetting all state...');
-        
+    // Handle reset/new sort
+    const handleReset = () => {
         // Clear selections
         setSelectedColleges([]);
         setSelectedParameters([]);
         setSortingResults([]);
-        setSelectedForNextIteration([]);
         
         // Reset iteration state
-        const newIterationId = `iteration-${Date.now()}`;
-        setCurrentIterationId(newIterationId);
+        setCurrentIterationId(`iteration-${Date.now()}`);
         setIsSubsequentIteration(false);
         
         // Clear history
@@ -363,18 +306,46 @@ export const RecursiveSorting: React.FC = () => {
         
         // Clear localStorage flags
         localStorage.removeItem('hasCompletedFirstIteration');
-        localStorage.removeItem('collegeIterationHistory');
+        
+        // Switch to selection tab
+        setActiveTab("selection");
+    };
+
+    // Add this function to get colleges from history
+    const getPreviouslySelectedColleges = useCallback((iterationId: string) => {
+        const iteration = iterationHistory.find(it => it.id === iterationId);
+        if (!iteration) return null;
+
+        // Get the colleges that were selected in this iteration
+        const selectedCollegeIds = iteration.selectedColleges;
+        return colleges.filter(college => selectedCollegeIds.includes(college['Unnamed: 0']));
+    }, [iterationHistory, colleges]);
+
+    // Update the handleIterationClick function
+    const handleIterationClick = useCallback((iterationId: string) => {
+        // Find the iteration in history
+        const iteration = iterationHistory.find(it => it.id === iterationId);
+        if (!iteration) return;
+
+        // Get the colleges for this iteration
+        const historicColleges = getPreviouslySelectedColleges(iterationId);
+        if (!historicColleges) return;
+
+        // Set the selected colleges
+        setSelectedColleges(historicColleges);
+        
+        // Set the current iteration ID
+        setCurrentIterationId(iterationId);
+        
+        // Clear sorting results to force recomputation
+        setSortingResults([]);
         
         // Switch to selection tab
         setActiveTab("selection");
         
-        // Reset sorting history if available
-        if (resetState) {
-            resetState();
-        }
-
-        console.log('Reset complete');
-    }, [resetState]);
+        // Set subsequent iteration flag if not initial sort
+        setIsSubsequentIteration(iterationId !== iterationHistory[0]?.id);
+    }, [iterationHistory, getPreviouslySelectedColleges]);
 
     if (loading) {
         return (

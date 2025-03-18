@@ -152,50 +152,39 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
     return [];
   }, [colleges, iterationId, getPreviouslySelectedColleges, isFirstIteration]);
 
-  // Ensure selectedColleges is always an array
-  const effectiveSelectedColleges = Array.isArray(selectedColleges) ? selectedColleges : [];
+  // Then apply other filters
+  const filteredColleges = useMemo(() => {
+    // Start with available colleges (already filtered by iteration)
+    let result = [...availableColleges];
 
-  // Update the filtered colleges computation
-  const filteredColleges = React.useMemo(() => {
-    if (!colleges) return [];
-    
-    let filtered = [...colleges];
-
-    // Apply search filter
+    // Apply search filter if any
     if (collegeOptions.searchQuery) {
-      const query = collegeOptions.searchQuery.toLowerCase();
-      filtered = filtered.filter(college => 
-        college.Name.toLowerCase().includes(query)
+      const search = collegeOptions.searchQuery.toLowerCase();
+      result = result.filter(college => 
+        college.Name.toLowerCase().includes(search)
       );
     }
 
-    // Apply selected/all filter
+    // Apply selected/unselected filter
     if (collegeOptions.filterBy === 'selected') {
-      filtered = filtered.filter(college => 
-        effectiveSelectedColleges.includes(college.Name) || 
-        effectiveSelectedColleges.includes(college['Unnamed: 0'])
-      );
+      result = result.filter(college => selectedColleges.includes(college.Name));
+    } else if (collegeOptions.filterBy === 'unselected') {
+      result = result.filter(college => !selectedColleges.includes(college.Name));
     }
 
     // Apply sorting
-    switch (collegeOptions.sortBy) {
-      case 'name':
-        filtered.sort((a, b) => a.Name.localeCompare(b.Name));
-        break;
-      case 'rank':
-        filtered.sort((a, b) => {
-          const rankA = parseFloat(a.PR) || 0;
-          const rankB = parseFloat(b.PR) || 0;
-          return rankB - rankA;
-        });
-        break;
-      default:
-        // Keep original order
-        break;
+    if (collegeOptions.sortBy === 'alphabetical') {
+      result.sort((a, b) => a.Name.localeCompare(b.Name));
+    } else if (collegeOptions.sortBy === 'parameter' && collegeOptions.sortParameter) {
+      result.sort((a, b) => {
+        const paramA = Number(a[collegeOptions.sortParameter!]);
+        const paramB = Number(b[collegeOptions.sortParameter!]);
+        return paramB - paramA;
+      });
     }
 
-    return filtered;
-  }, [colleges, collegeOptions, effectiveSelectedColleges]);
+    return result;
+  }, [availableColleges, collegeOptions, selectedColleges]);
 
   // Filter and sort parameters based on options
   const filteredParameters = React.useMemo(() => {
@@ -227,19 +216,20 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
     return previouslySelected?.includes(collegeName) ?? false;
   }, [iterationId, isFirstIteration, getPreviouslySelectedColleges]);
 
-  // Update the college selection handler
-  const handleCollegeSelect = (collegeId: string) => {
-    const college = colleges.find(c => c['Unnamed: 0'] === collegeId);
-    if (!college) return;
-
-    onCollegesChange(prev => {
-      const prevArray = Array.isArray(prev) ? prev : [];
-      if (prevArray.includes(college.Name)) {
-        return prevArray.filter(id => id !== college.Name);
-      }
-      return [...prevArray, college.Name];
-    });
-  };
+  // Toggle college selection
+  const handleCollegeSelect = useCallback((college: College) => {
+    console.log('🔄 [SelectionControls] Toggling college selection:', college.Name);
+    
+    // Check if the college is already selected by Name
+    const isSelected = selectedColleges.includes(college.Name);
+    
+    // If selected, remove it; otherwise, add it
+    if (isSelected) {
+      onCollegesChange(selectedColleges.filter(name => name !== college.Name));
+    } else {
+      onCollegesChange([...selectedColleges, college.Name]);
+    }
+  }, [selectedColleges, onCollegesChange]);
 
   // Handle select all colleges
   const handleSelectAll = useCallback(() => {
@@ -447,7 +437,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
                     return (
                       <CommandItem
                         key={college.Name}
-                        onSelect={() => handleCollegeSelect(college['Unnamed: 0'])}
+                        onSelect={() => handleCollegeSelect(college)}
                         className={cn(
                           "flex items-center justify-between py-3 px-4 cursor-pointer",
                           selectedColleges.includes(college.Name) && "bg-primary/10"
