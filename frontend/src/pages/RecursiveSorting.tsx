@@ -310,13 +310,23 @@ export const RecursiveSorting: React.FC = () => {
         setActiveTab("selection");
     };
 
-    // Add handleIterationClick function
+    // Add this function to get colleges from history
+    const getPreviouslySelectedColleges = useCallback((iterationId: string) => {
+        const iteration = iterationHistory.find(it => it.id === iterationId);
+        if (!iteration) return null;
+
+        // Get the colleges that were selected in this iteration
+        const selectedCollegeIds = iteration.selectedColleges;
+        return colleges.filter(college => selectedCollegeIds.includes(college['Unnamed: 0']));
+    }, [iterationHistory, colleges]);
+
+    // Update the handleIterationClick function
     const handleIterationClick = useCallback((iterationId: string) => {
         // Find the iteration in history
         const iteration = iterationHistory.find(it => it.id === iterationId);
         if (!iteration) return;
 
-        // Get the colleges for this iteration from history
+        // Get the colleges for this iteration
         const historicColleges = getPreviouslySelectedColleges(iterationId);
         if (!historicColleges) return;
 
