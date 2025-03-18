@@ -46,6 +46,8 @@ interface SelectionControlsProps {
   isLoading?: boolean;
   iterationId?: string;
   isSubsequentIteration?: boolean;
+  collegeOptions?: SortingOptions;
+  setCollegeOptions?: (options: SortingOptions) => void;
 }
 
 export const SelectionControls: React.FC<SelectionControlsProps> = ({
@@ -57,7 +59,9 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   onParametersChange,
   isLoading = false,
   iterationId,
-  isSubsequentIteration = false
+  isSubsequentIteration = false,
+  collegeOptions: externalCollegeOptions,
+  setCollegeOptions: externalSetCollegeOptions
 }) => {
   // Log component mount and props
   console.log('🔄 [SelectionControls] Component mounted/updated with props:', {
@@ -87,8 +91,8 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
     effectiveIsSubsequentIteration
   });
 
-  // State for college selection options - set initial value based on iteration
-  const [collegeOptions, setCollegeOptions] = React.useState<SortingOptions>(() => {
+  // State for college selection options - use external state if provided
+  const [internalCollegeOptions, setInternalCollegeOptions] = React.useState<SortingOptions>(() => {
     const initialFilter = effectiveIsSubsequentIteration ? 'selected' : 'all';
     console.log('🔧 [SelectionControls] Setting initial filter to:', initialFilter);
     return {
@@ -97,6 +101,10 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
       searchQuery: ''
     };
   });
+
+  // Use external or internal state
+  const collegeOptions = externalCollegeOptions || internalCollegeOptions;
+  const setCollegeOptions = externalSetCollegeOptions || setInternalCollegeOptions;
 
   // State for parameter selection options
   const [parameterOptions, setParameterOptions] = React.useState<SortingOptions>({
