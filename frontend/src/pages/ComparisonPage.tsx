@@ -5,7 +5,12 @@ import { useCollegeData } from '@/hooks/useCollegeData';
 import { useCollegeHistory } from '@/hooks/useCollegeHistory';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { Button } from '@/components/ui/button';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Layout } from '@/components/Layout';
+import { ArrowLeft, Plus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ComparisonTable } from '@/components/ComparisonTable';
 
 export const ComparisonPage: React.FC = () => {
   const {
@@ -20,6 +25,7 @@ export const ComparisonPage: React.FC = () => {
   
   const location = useLocation();
   const { selectedForComparison, clearComparison } = useComparison();
+  const navigate = useNavigate();
 
   // Add iteration state
   const [currentIterationId, setCurrentIterationId] = useState<string>(() => 
@@ -145,49 +151,59 @@ export const ComparisonPage: React.FC = () => {
   // Force a complete remount of SelectionControls when iteration changes
   const selectionControlsKey = `selection-controls-${currentIterationId}-${forceUpdate}`;
 
-  return (
-    <div className="container mx-auto py-6 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">College Comparison</h1>
-        <div className="flex items-center gap-4">
-          {isSubsequentIteration && (
-            <div className="text-sm text-muted-foreground">
-              Iteration: {isFirstIteration(currentIterationId) ? 'First' : 'Subsequent'} 
-              ({availableColleges.length} colleges available)
-            </div>
-          )}
-          {selectedColleges.length > 0 && (
-            <Button 
-              onClick={handleNewIteration}
-              variant="outline"
-            >
-              Start New Iteration
-            </Button>
-          )}
-        </div>
-      </div>
+  const handleNewComparison = () => {
+    clearComparison();
+    navigate('/explore');
+  };
 
-      <SelectionControls
-        colleges={colleges}
-        parameters={parameters}
-        selectedColleges={selectedColleges}
-        selectedParameters={selectedParameters}
-        onCollegesChange={setSelectedColleges}
-        onParametersChange={setSelectedParameters}
-        isLoading={loading}
-        iterationId={currentIterationId}
-        isSubsequentIteration={isSubsequentIteration}
-        key={selectionControlsKey}
-      />
-      
-      {selectedColleges.length > 0 && selectedParameters.length > 0 && (
-        <CollegeComparison
-          colleges={colleges}
-          selectedColleges={selectedColleges}
-          selectedParameters={selectedParameters}
-          iterationId={currentIterationId}
-        />
-      )}
-    </div>
+  return (
+    <Layout>
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              className="gap-2"
+              onClick={() => navigate('/explore')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Explore
+            </Button>
+            <h1 className="text-2xl font-bold">College Comparison</h1>
+          </div>
+          <Button
+            onClick={handleNewComparison}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New Comparison
+          </Button>
+        </div>
+
+        {selectedColleges.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>No Colleges Selected</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Select colleges from the explore page to compare them.
+              </p>
+              <Button
+                className="mt-4 gap-2"
+                onClick={() => navigate('/explore')}
+              >
+                <Plus className="h-4 w-4" />
+                Add Colleges
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <ScrollArea className="rounded-lg border bg-card">
+            <ComparisonTable colleges={selectedColleges} />
+          </ScrollArea>
+        )}
+      </div>
+    </Layout>
   );
 }; 

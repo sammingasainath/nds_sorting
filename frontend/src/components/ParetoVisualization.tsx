@@ -1,12 +1,13 @@
 import React, { useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, CheckSquare } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, CheckSquare, Compare } from "lucide-react";
 import { NonDominatedSortingResult } from '@/types';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useComparison } from '@/contexts/ComparisonContext';
 
 // Types
 interface CollegeDetails {
@@ -195,6 +196,7 @@ export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
     onSelectionChange,
     selectedIds,
 }) => {
+    const { addCollege, isCollegeSelected } = useComparison();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = React.useState(false);
     const [canScrollRight, setCanScrollRight] = React.useState(false);
@@ -284,6 +286,11 @@ export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
             setTimeout(updateScrollButtons, 100);
         }
     }, [data, updateScrollButtons]);
+
+    // Add this function to handle adding to comparison
+    const handleAddToComparison = (college: CollegeDetails) => {
+        addCollege(college);
+    };
 
     if (frontGroups.length === 0) {
         return (

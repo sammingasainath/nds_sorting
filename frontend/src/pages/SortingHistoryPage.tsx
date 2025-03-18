@@ -1,34 +1,27 @@
 import React from 'react';
-import { SortingHistoryView } from '@/components/SortingHistory';
+import { Layout } from '@/components/Layout';
+import { SortingHistory } from '@/components/SortingHistory';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
 
 export const SortingHistoryPage: React.FC = () => {
     const navigate = useNavigate();
 
     return (
         <Layout>
-            <div className="container mx-auto py-10 px-4 max-w-[1400px]">
-                <div className="flex items-center gap-4 mb-8">
+            <div className="container mx-auto py-6">
+                <div className="mb-6">
                     <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate('/')}
+                        variant="ghost"
                         className="gap-2"
+                        onClick={() => navigate('/explore')}
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Sorting
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Explore
                     </Button>
-                    <h1 className="text-4xl font-bold tracking-tight text-primary">
-                        Sorting History
-                    </h1>
                 </div>
-                
-                <div className="max-w-2xl mx-auto">
-                    <SortingHistoryView />
-                </div>
+                <SortingHistory />
             </div>
         </Layout>
     );

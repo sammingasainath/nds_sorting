@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCollegeData } from '@/hooks/useCollegeData';
 import { SelectionControls } from '@/components/SelectionControls';
 import { ParetoVisualization } from '@/components/ParetoVisualization';
@@ -310,6 +310,32 @@ export const RecursiveSorting: React.FC = () => {
         setActiveTab("selection");
     };
 
+    // Add handleIterationClick function
+    const handleIterationClick = useCallback((iterationId: string) => {
+        // Find the iteration in history
+        const iteration = iterationHistory.find(it => it.id === iterationId);
+        if (!iteration) return;
+
+        // Get the colleges for this iteration from history
+        const historicColleges = getPreviouslySelectedColleges(iterationId);
+        if (!historicColleges) return;
+
+        // Set the selected colleges
+        setSelectedColleges(historicColleges);
+        
+        // Set the current iteration ID
+        setCurrentIterationId(iterationId);
+        
+        // Clear sorting results to force recomputation
+        setSortingResults([]);
+        
+        // Switch to selection tab
+        setActiveTab("selection");
+        
+        // Set subsequent iteration flag if not initial sort
+        setIsSubsequentIteration(iterationId !== iterationHistory[0]?.id);
+    }, [iterationHistory, getPreviouslySelectedColleges]);
+
     if (loading) {
         return (
             <Layout>
@@ -336,6 +362,7 @@ export const RecursiveSorting: React.FC = () => {
                     <SortingBreadcrumbs 
                         iterations={iterationHistory}
                         currentIterationId={currentIterationId}
+                        onIterationClick={handleIterationClick}
                     />
                     {(iterationHistory.length > 0 || selectedColleges.length > 0) && (
                         <Button
