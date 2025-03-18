@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCollegeData } from '@/hooks/useCollegeData';
 import { SelectionControls } from '@/components/SelectionControls';
 import { ParetoVisualization } from '@/components/ParetoVisualization';
 import { Button } from '@/components/ui/button';
-import { Play, Settings, Sparkles, MessageSquare } from 'lucide-react';
+import { Play, Settings, Sparkles, MessageSquare, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -69,12 +69,12 @@ export const RecursiveSorting: React.FC = () => {
     const [showAIInsights, setShowAIInsights] = useState<boolean>(false);
     const [needsApiKey, setNeedsApiKey] = useState(false);
 
-    // Add college options state
-    const [collegeOptions, setCollegeOptions] = useState<SortingOptions>(() => ({
-        sortBy: 'original',
-        filterBy: 'all',
-        searchQuery: ''
-    }));
+    // Track iteration history
+    const [iterationHistory, setIterationHistory] = useState<{
+        id: string;
+        collegeCount: number;
+        timestamp: number;
+    }[]>([]);
 
     // Debug current tab
     useEffect(() => {
@@ -272,37 +272,43 @@ export const RecursiveSorting: React.FC = () => {
         }
     }, [sortingHistoryState.currentEntryId, sortingHistoryState.entries, setSelectedColleges, setSelectedParameters, setSortingResults]);
 
+    // Add iteration to history when starting new iteration
+    useEffect(() => {
+        if (currentIterationId && selectedColleges.length > 0) {
+            setIterationHistory(prev => {
+                // Check if this iteration is already in history
+                if (prev.some(it => it.id === currentIterationId)) {
+                    return prev;
+                }
+                return [...prev, {
+                    id: currentIterationId,
+                    collegeCount: selectedColleges.length,
+                    timestamp: Date.now()
+                }];
+            });
+        }
+    }, [currentIterationId, selectedColleges]);
+
     // Handle reset/new sort
-    const handleReset = useCallback(() => {
-        console.log('🔄 [RecursiveSorting] Resetting sort');
-        
+    const handleReset = () => {
         // Clear selections
         setSelectedColleges([]);
         setSelectedParameters([]);
-        
-        // Clear sorting results
         setSortingResults([]);
         
-        // Generate new iteration ID
-        const newIterationId = `iteration-${Date.now()}`;
-        setCurrentIterationId(newIterationId);
-        
         // Reset iteration state
+        setCurrentIterationId(`iteration-${Date.now()}`);
         setIsSubsequentIteration(false);
+        
+        // Clear history
+        setIterationHistory([]);
+        
+        // Clear localStorage flags
         localStorage.removeItem('hasCompletedFirstIteration');
         
         // Switch to selection tab
         setActiveTab("selection");
-        
-        // Reset college options to show all items
-        setCollegeOptions({
-            sortBy: 'original',
-            filterBy: 'all',
-            searchQuery: ''
-        });
-        
-        console.log('✅ [RecursiveSorting] Sort reset complete');
-    }, [setSelectedColleges, setSelectedParameters, setSortingResults]);
+    };
 
     if (loading) {
         return (
@@ -326,10 +332,24 @@ export const RecursiveSorting: React.FC = () => {
     return (
         <Layout>
             <div className="container mx-auto py-6 space-y-6">
-                <SortingBreadcrumbs 
-                    onReset={handleReset}
-                    currentIterationId={currentIterationId}
-                />
+                <div className="flex justify-between items-center">
+                    <SortingBreadcrumbs 
+                        iterations={iterationHistory}
+                        currentIterationId={currentIterationId}
+                    />
+                    {(iterationHistory.length > 0 || selectedColleges.length > 0) && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleReset}
+                            className="gap-2"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                            New Sort
+                        </Button>
+                    )}
+                </div>
+
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <div className="flex justify-between items-center mb-6">
                         <TabsList className="grid grid-cols-3">
@@ -367,7 +387,7 @@ export const RecursiveSorting: React.FC = () => {
                         </div>
                     </div>
 
-                    <TabsContent value="selection">
+                    <TabsContent value="selection" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2">
                                 <SelectionControls
@@ -380,82 +400,167 @@ export const RecursiveSorting: React.FC = () => {
                                     isLoading={loading}
                                     iterationId={currentIterationId}
                                     isSubsequentIteration={isSubsequentIteration}
-                                    collegeOptions={collegeOptions}
-                                    setCollegeOptions={setCollegeOptions}
                                     key={`selection-controls-${currentIterationId}`}
                                 />
                             </div>
                             <div className="space-y-6">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>AI Parameter Suggestions</CardTitle>
+                                        <CardTitle>AI Parameter Recommendations</CardTitle>
                                         <CardDescription>
-                                            Get personalized parameter suggestions based on your selected colleges
+                                            Get AI-powered parameter suggestions based on your goals (optional)
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <ParameterSuggestion
-                                            selectedColleges={selectedColleges}
-                                            onParameterSelect={setSelectedParameters}
-                                            selectedParameters={selectedParameters}
+                                        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm rounded-md border border-amber-200 dark:border-amber-900">
+                                            <strong>Note:</strong> AI suggestions are optional and not required for sorting. You can manually select parameters in the panel on the left.
+                                        </div>
+                                        <ParameterSuggestion 
+                                            availableParameters={parameters}
+                                            onParametersSelected={setSelectedParameters}
                                         />
                                     </CardContent>
                                 </Card>
-                                <Button
-                                    onClick={handleStartSort}
-                                    disabled={!canStartSort}
-                                    className="w-full gap-2"
-                                >
-                                    <Play className="h-4 w-4" />
-                                    Start Sorting
-                                </Button>
+                                
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Run Sorting</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <h2 className="text-2xl font-bold tracking-tight">College Explorer</h2>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        onClick={handleStartSort}
+                                                        disabled={!canStartSort || loading}
+                                                        className="gap-2"
+                                                    >
+                                                        {loading ? (
+                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                                        ) : (
+                                                            <Play className="h-4 w-4" />
+                                                        )}
+                                                        Start Sorting
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            
+                                            {error && (
+                                                <div className="text-sm text-red-500 p-2 bg-red-50 rounded">
+                                                    {error}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
                         </div>
                     </TabsContent>
 
                     <TabsContent value="results" className="space-y-6">
-                        <ParetoVisualization
-                            results={sortingResults}
-                            onCollegeSelect={setSelectedForNextIteration}
-                            selectedColleges={selectedForNextIteration}
-                        />
-                        <div className="flex justify-end gap-4">
-                            <Button
-                                onClick={handleStartNewIterationClick}
-                                disabled={selectedForNextIteration.length === 0}
-                                className="gap-2"
-                            >
-                                <Play className="h-4 w-4" />
-                                Start New Iteration with Selected
-                            </Button>
+                        <div className="grid grid-cols-1 gap-6">
+                            <ParetoVisualization 
+                                data={sortingResults}
+                                onSelectionChange={setSelectedForNextIteration}
+                                selectedIds={selectedForNextIteration}
+                            />
+                            
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground">Selected for next iteration:</span>
+                                    <span className="font-medium">{selectedForNextIteration.length}</span>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-2">
+                                    <Button
+                                        onClick={handleStartNewIterationClick}
+                                        disabled={selectedForNextIteration.length === 0}
+                                        className="gap-2"
+                                    >
+                                        <Play className="h-4 w-4" />
+                                        Start New Iteration
+                                    </Button>
+                                    
+                                    <Button
+                                        variant="outline"
+                                        onClick={resetState}
+                                        className="gap-2"
+                                    >
+                                        <Settings className="h-4 w-4" />
+                                        Reset All
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </TabsContent>
 
                     <TabsContent value="insights" className="space-y-6">
-                        {needsApiKey ? (
-                            <ProviderSelector onComplete={() => setNeedsApiKey(false)} />
-                        ) : (
-                            <>
-                                <div className="flex justify-end">
-                                    <Button
-                                        onClick={generateInsights}
-                                        disabled={isGeneratingInsight || !sortingResults.length}
-                                        className="gap-2"
-                                    >
-                                        {isGeneratingInsight ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Sparkles className="h-4 w-4" />
-                                        )}
-                                        Generate Insights
-                                    </Button>
+                        <Card className="h-full">
+                            <CardHeader>
+                                <CardTitle>AI Insights</CardTitle>
+                                <CardDescription>
+                                    Analysis of your optimal colleges
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm rounded-md border border-amber-200 dark:border-amber-900">
+                                    <p className="font-medium mb-2">Disclaimer:</p>
+                                    <p>The insights provided are generated by AI and may not always be accurate or complete. They are based on the available data and should be used as a supplementary tool, not as the sole basis for decision-making.</p>
+                                    <p className="mt-2">Always verify important information from official sources.</p>
                                 </div>
-                                {collegeInsight && <InsightCard insight={collegeInsight} />}
-                            </>
-                        )}
+                                
+                                {!collegeInsight && !isGeneratingInsight ? (
+                                    <div className="text-center p-8">
+                                        <p className="text-muted-foreground mb-4">
+                                            Click the button below to generate AI insights about your optimal colleges.
+                                        </p>
+                                        <Button 
+                                            onClick={generateInsights}
+                                            disabled={sortingResults.length === 0 || isGeneratingInsight}
+                                            className="gap-2"
+                                        >
+                                            <Sparkles className="h-4 w-4" />
+                                            Generate Insights
+                                        </Button>
+                                        
+                                        {needsApiKey && (
+                                            <div className="mt-4">
+                                                <p className="text-sm text-amber-600 mb-2">
+                                                    AI insights are optional. You can still use the sorting functionality without AI.
+                                                </p>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="text-xs"
+                                                    onClick={() => {
+                                                        // Do nothing or handle differently
+                                                        console.log("API key configuration is disabled");
+                                                    }}
+                                                >
+                                                    Continue Without AI
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <InsightCard
+                                        title="College Analysis"
+                                        description="Detailed analysis of your optimal colleges"
+                                        insight={collegeInsight}
+                                        isLoading={isGeneratingInsight}
+                                        needsApiKey={needsApiKey}
+                                        onConfigureApiKey={() => {
+                                            // Do nothing or handle differently
+                                            console.log("API key configuration is disabled");
+                                        }}
+                                    />
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>
         </Layout>
     );
-};
+}; 

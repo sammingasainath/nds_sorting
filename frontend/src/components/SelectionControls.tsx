@@ -46,8 +46,6 @@ interface SelectionControlsProps {
   isLoading?: boolean;
   iterationId?: string;
   isSubsequentIteration?: boolean;
-  collegeOptions?: SortingOptions;
-  setCollegeOptions?: (options: SortingOptions) => void;
 }
 
 export const SelectionControls: React.FC<SelectionControlsProps> = ({
@@ -59,9 +57,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   onParametersChange,
   isLoading = false,
   iterationId,
-  isSubsequentIteration = false,
-  collegeOptions: externalCollegeOptions,
-  setCollegeOptions: externalSetCollegeOptions
+  isSubsequentIteration = false
 }) => {
   // Log component mount and props
   console.log('🔄 [SelectionControls] Component mounted/updated with props:', {
@@ -91,8 +87,8 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
     effectiveIsSubsequentIteration
   });
 
-  // State for college selection options - use external state if provided
-  const [internalCollegeOptions, setInternalCollegeOptions] = React.useState<SortingOptions>(() => {
+  // State for college selection options - set initial value based on iteration
+  const [collegeOptions, setCollegeOptions] = React.useState<SortingOptions>(() => {
     const initialFilter = effectiveIsSubsequentIteration ? 'selected' : 'all';
     console.log('🔧 [SelectionControls] Setting initial filter to:', initialFilter);
     return {
@@ -102,9 +98,16 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
     };
   });
 
-  // Use external or internal state
-  const collegeOptions = externalCollegeOptions || internalCollegeOptions;
-  const setCollegeOptions = externalSetCollegeOptions || setInternalCollegeOptions;
+  // Reset to 'all' filter when selections are cleared
+  useEffect(() => {
+    if (selectedColleges.length === 0 && selectedParameters.length === 0) {
+      console.log('🔄 [SelectionControls] Resetting filter to "all" due to cleared selections');
+      setCollegeOptions(prev => ({
+        ...prev,
+        filterBy: 'all'
+      }));
+    }
+  }, [selectedColleges.length, selectedParameters.length]);
 
   // State for parameter selection options
   const [parameterOptions, setParameterOptions] = React.useState<SortingOptions>({
