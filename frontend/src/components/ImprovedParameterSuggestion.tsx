@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useLLM } from '@/contexts/LLMContext';
-import { ParameterInfoCard } from './ParameterInfoCard';
+import { ParameterInfoCard } from '@/components/ParameterInfoCard';
 import { parameterInfo } from '@/lib/parameterInfo';
 
 interface ImprovedParameterSuggestionProps {
