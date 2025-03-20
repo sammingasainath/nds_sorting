@@ -20,6 +20,10 @@ import { Loader2 } from 'lucide-react';
 import { useCollegeHistory } from '@/hooks/useCollegeHistory';
 import { useSortingHistory } from '@/contexts/SortingHistoryContext';
 import { SortingBreadcrumbs } from '@/components/SortingBreadcrumbs';
+import { ParameterSelector } from '@/components/ParameterSelector';
+import { parameterInfo } from '@/lib/parameterInfo';
+import { AdvancedParameterDropdown } from '@/components/AdvancedParameterDropdown';
+import { ImprovedParameterSuggestion } from '@/components/ImprovedParameterSuggestion';
 
 export const RecursiveSorting: React.FC = () => {
     const {
@@ -388,8 +392,8 @@ export const RecursiveSorting: React.FC = () => {
                     </div>
 
                     <TabsContent value="selection" className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className="lg:col-span-2">
+                        <div className="grid grid-cols-1 gap-6">
+                            <div className="w-full">
                                 <SelectionControls
                                     colleges={colleges}
                                     parameters={parameters}
@@ -403,58 +407,86 @@ export const RecursiveSorting: React.FC = () => {
                                     key={`selection-controls-${currentIterationId}`}
                                 />
                             </div>
-                            <div className="space-y-6">
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Parameters</CardTitle>
+                                        <CardDescription>
+                                            Choose the parameters for college comparison
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <AdvancedParameterDropdown
+                                            parameters={parameters}
+                                            selectedParameters={selectedParameters}
+                                            onParametersChange={setSelectedParameters}
+                                        />
+                                    </CardContent>
+                                </Card>
+
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>AI Parameter Recommendations</CardTitle>
                                         <CardDescription>
-                                            Get AI-powered parameter suggestions based on your goals (optional)
+                                            Get AI-powered parameter suggestions based on your goals
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-sm rounded-md border border-amber-200 dark:border-amber-900">
-                                            <strong>Note:</strong> AI suggestions are optional and not required for sorting. You can manually select parameters in the panel on the left.
-                                        </div>
-                                        <ParameterSuggestion 
+                                        <ImprovedParameterSuggestion 
                                             availableParameters={parameters}
                                             onParametersSelected={setSelectedParameters}
                                         />
                                     </CardContent>
                                 </Card>
-                                
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Run Sorting</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center">
-                                                <h2 className="text-2xl font-bold tracking-tight">College Explorer</h2>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        onClick={handleStartSort}
-                                                        disabled={!canStartSort || loading}
-                                                        className="gap-2"
-                                                    >
-                                                        {loading ? (
-                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                                        ) : (
-                                                            <Play className="h-4 w-4" />
-                                                        )}
-                                                        Start Sorting
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            
-                                            {error && (
-                                                <div className="text-sm text-red-500 p-2 bg-red-50 rounded">
-                                                    {error}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
                             </div>
+                            
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Run Sorting</CardTitle>
+                                    <CardDescription>
+                                        Start the college sorting process with your selected parameters
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <div className="text-sm">
+                                                    Selected: <span className="font-medium">{selectedColleges.length}</span> colleges, 
+                                                    <span className="font-medium ml-1">{selectedParameters.length}</span> parameters
+                                                </div>
+                                                {!canStartSort && (
+                                                    <div className="text-xs text-amber-600 mt-1">
+                                                        Please select at least one college and one parameter to proceed
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    onClick={handleStartSort}
+                                                    disabled={!canStartSort || loading}
+                                                    className="gap-2"
+                                                    size="lg"
+                                                >
+                                                    {loading ? (
+                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                                    ) : (
+                                                        <Play className="h-4 w-4" />
+                                                    )}
+                                                    Start Sorting
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        
+                                        {error && (
+                                            <div className="text-sm text-red-500 p-2 bg-red-50 rounded">
+                                                {error}
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
                     </TabsContent>
 
