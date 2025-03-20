@@ -45,6 +45,4 @@ export const ParameterInfoCard: React.FC<
       </HoverCardContent>
     </HoverCard>
   );
-};
-
-export default ParameterInfoCard; 
+}; 
