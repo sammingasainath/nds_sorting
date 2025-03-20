@@ -5,6 +5,8 @@ interface ParameterInfo {
     category?: string;
     formula?: string;
     fullName?: string;
+    examples?: string;
+    importance?: string;
   };
 }
 
@@ -14,19 +16,25 @@ export const parameterInfo: ParameterInfo = {
     description: "Student Strength including Doctoral Students: Evaluates the total number of students at different levels. Calculated using total sanctioned intake (NT), enrolled students (NE), and doctoral students (NP).",
     weight: "20",
     formula: "SS = f(NT, NE) × 15 + f(NP) × 5",
-    fullName: "Student Strength"
+    fullName: "Student Strength",
+    examples: "A college with 1000 students vs. one with 3000 students may offer different experiences in terms of class sizes and resources.",
+    importance: "Higher student strength can indicate better infrastructure and more diverse course offerings."
   },
   "FSR": {
     category: "Teaching, Learning & Resources (TLR)",
     description: "Faculty-Student Ratio: Measures the ratio between permanent faculty members and enrolled students to ensure effective teaching and learning quality.",
     weight: "30",
-    fullName: "Faculty-Student Ratio"
+    fullName: "Faculty-Student Ratio",
+    examples: "An FSR of 1:15 means one faculty member per 15 students, while 1:30 means one per 30 students.",
+    importance: "Lower ratios typically mean more individual attention and better academic support."
   },
   "FQE": {
     category: "Teaching, Learning & Resources (TLR)",
     description: "Faculty Qualification & Experience: Assesses faculty members' qualifications (PhD or equivalent) and experience, giving equal weight to both academic credentials and practical experience.",
     weight: "15",
-    fullName: "Faculty Qualification & Experience"
+    fullName: "Faculty Qualification & Experience",
+    examples: "A college with 80% PhD faculty vs. one with 30% PhD faculty; professors with industry experience vs. purely academic backgrounds.",
+    importance: "Better qualified faculty can provide higher quality education and research opportunities."
   },
   "FRU": {
     category: "Teaching, Learning & Resources (TLR)",
