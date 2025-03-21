@@ -10,6 +10,8 @@ import {
 import { SortingOptions, SortOption, FilterOption } from '@/types/selection';
 import { Search, SortAsc, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 
 interface SelectionControlsHeaderProps {
     title: string;
@@ -31,7 +33,7 @@ export const SelectionControlsHeader: React.FC<SelectionControlsHeaderProps> = (
     setOptions,
     onSelectAll,
     areAllSelected,
-    parameters,
+    parameters = [],
     isSubsequentIteration = false,
 }) => {
     // Log component mount and props
@@ -104,87 +106,130 @@ export const SelectionControlsHeader: React.FC<SelectionControlsHeaderProps> = (
     };
 
     return (
-        <div className="flex flex-col space-y-4">
-            <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                    {selectedCount} of {totalCount} selected
-                </span>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onSelectAll}
-                    className="text-sm"
-                >
-                    {areAllSelected ? "Deselect All" : "Select All"}
-                </Button>
+        <div className="flex flex-col space-y-4 pb-4">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-xl font-semibold">{title}</h2>
+                    <p className="text-sm text-muted-foreground">
+                        {selectedCount} of {totalCount} selected
+                    </p>
+                </div>
+
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onSelectAll}
+                    >
+                        {areAllSelected ? 'Deselect All' : 'Select All'}
+                    </Button>
+                </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center">
                 <div className="flex-1 min-w-[200px]">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search..."
+                            placeholder="Search colleges..."
+                            className="pl-8"
                             value={options.searchQuery}
-                            onChange={handleSearchChange}
-                            className="pl-9 bg-background/50 backdrop-blur-sm"
+                            onChange={(e) => setOptions({ ...options, searchQuery: e.target.value })}
                         />
                     </div>
                 </div>
 
-                <Select
-                    value={options.sortBy}
-                    onValueChange={handleSortChange}
-                >
-                    <SelectTrigger className="w-[160px] bg-background/50 backdrop-blur-sm">
-                        <div className="flex items-center gap-2">
-                            <SortAsc className="h-4 w-4 text-muted-foreground" />
-                            <SelectValue placeholder="Sort by" />
-                        </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="original">Original Order</SelectItem>
-                        <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                        {parameters && (
-                            <SelectItem value="parameter">By Parameter</SelectItem>
-                        )}
-                    </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                    <div>
+                        <Select
+                            value={options.sortBy}
+                            onValueChange={(value: SortOption) => {
+                                setOptions({ 
+                                    ...options, 
+                                    sortBy: value,
+                                    // Clear sort parameter if not sorting by parameter
+                                    sortParameter: value === 'parameter' ? options.sortParameter : undefined 
+                                });
+                            }}
+                        >
+                            <SelectTrigger className="w-[180px]">
+                                <div className="flex items-center gap-2">
+                                    <SortAsc className="h-4 w-4" />
+                                    <SelectValue placeholder="Sort by" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="original">Original Order</SelectItem>
+                                <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                                <SelectItem value="nirf">NIRF Rank</SelectItem>
+                                <SelectItem value="parameter">Parameter</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                {options.sortBy === 'parameter' && parameters && (
-                    <Select
-                        value={options.sortParameter}
-                        onValueChange={handleParameterChange}
-                    >
-                        <SelectTrigger className="w-[160px] bg-background/50 backdrop-blur-sm">
-                            <SelectValue placeholder="Select parameter" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {parameters.map(param => (
-                                <SelectItem key={param} value={param}>
-                                    {param}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
-
-                <Select
-                    value={options.filterBy}
-                    onValueChange={handleFilterChange}
-                >
-                    <SelectTrigger className="w-[160px] bg-background/50 backdrop-blur-sm">
-                        <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4 text-muted-foreground" />
-                            <SelectValue placeholder="Filter by" />
+                    {options.sortBy === 'parameter' && (
+                        <div>
+                            <Select
+                                value={options.sortParameter}
+                                onValueChange={(value: string) => setOptions({ ...options, sortParameter: value })}
+                            >
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Select parameter" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {parameters.map(param => (
+                                        <SelectItem key={param} value={param}>{param}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Items</SelectItem>
-                        <SelectItem value="selected">Selected</SelectItem>
-                        <SelectItem value="unselected">Unselected</SelectItem>
-                    </SelectContent>
-                </Select>
+                    )}
+
+                    <div>
+                        <Select
+                            value={options.filterBy}
+                            onValueChange={(value: FilterOption) => setOptions({ ...options, filterBy: value })}
+                        >
+                            <SelectTrigger className="w-[150px]">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="h-4 w-4" />
+                                    <SelectValue placeholder="Filter" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Colleges</SelectItem>
+                                <SelectItem value="selected">Selected Only</SelectItem>
+                                <SelectItem value="unselected">Unselected Only</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+
+            <div className="border p-3 rounded-md">
+                <Label className="mb-2 block">NIRF Rank Range (1-{totalCount})</Label>
+                <div className="flex items-center gap-4">
+                    <div className="w-full">
+                        <Slider
+                            defaultValue={[options.nirfRangeMin || 1, options.nirfRangeMax || totalCount]}
+                            max={totalCount}
+                            min={1}
+                            step={1}
+                            onValueChange={(values) => {
+                                setOptions({
+                                    ...options,
+                                    nirfRangeMin: values[0],
+                                    nirfRangeMax: values[1]
+                                });
+                            }}
+                        />
+                    </div>
+                    <div className="flex gap-2 items-center whitespace-nowrap text-sm">
+                        <span>{options.nirfRangeMin || 1}</span>
+                        <span>-</span>
+                        <span>{options.nirfRangeMax || totalCount}</span>
+                    </div>
+                </div>
             </div>
         </div>
     );

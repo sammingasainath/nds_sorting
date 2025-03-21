@@ -1,4 +1,4 @@
-export type SortOption = 'original' | 'alphabetical' | 'parameter';
+export type SortOption = 'original' | 'alphabetical' | 'parameter' | 'nirf';
 export type FilterOption = 'all' | 'selected' | 'unselected';
 
 export interface SortingOptions {
@@ -6,6 +6,8 @@ export interface SortingOptions {
     sortParameter?: string;
     filterBy: FilterOption;
     searchQuery: string;
+    nirfRangeMin?: number;
+    nirfRangeMax?: number;
 }
 
 export interface SelectionState {
