@@ -24,6 +24,7 @@ import { ParameterSelector } from '@/components/ParameterSelector';
 import { parameterInfo } from '@/lib/parameterInfo';
 import { AdvancedParameterDropdown } from '@/components/AdvancedParameterDropdown';
 import { ImprovedParameterSuggestion } from '@/components/ImprovedParameterSuggestion';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export const RecursiveSorting: React.FC = () => {
     const {
@@ -393,62 +394,60 @@ export const RecursiveSorting: React.FC = () => {
 
                     <TabsContent value="selection" className="space-y-6">
                         <div className="grid grid-cols-1 gap-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Parameters</CardTitle>
-                                        <CardDescription>
-                                            Choose the parameters for college comparison
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <AdvancedParameterDropdown
-                                            parameters={parameters}
-                                            selectedParameters={selectedParameters}
-                                            onParametersChange={setSelectedParameters}
-                                        />
-                                    </CardContent>
-                                </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Parameters</CardTitle>
+                                    <CardDescription>
+                                        Choose the parameters for college comparison
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <AdvancedParameterDropdown
+                                        parameters={parameters}
+                                        selectedParameters={selectedParameters}
+                                        onParametersChange={setSelectedParameters}
+                                    />
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardHeader>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <div>
                                         <CardTitle>AI Parameter Recommendations</CardTitle>
                                         <CardDescription>
                                             Get AI-powered parameter suggestions based on your goals
                                         </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ImprovedParameterSuggestion 
-                                            availableParameters={parameters}
-                                            onParametersSelected={setSelectedParameters}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            </div>
-                            
+                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" size="sm" className="gap-2">
+                                                <Sparkles className="h-4 w-4" />
+                                                AI Suggestions
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[400px] p-4" align="end">
+                                            <ImprovedParameterSuggestion 
+                                                availableParameters={parameters}
+                                                onParametersSelected={setSelectedParameters}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </CardHeader>
+                            </Card>
+
                             <div className="w-full">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>College Selection</CardTitle>
-                                        <CardDescription>
-                                            Select colleges to compare using your chosen parameters
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <SelectionControls
-                                            colleges={colleges}
-                                            parameters={parameters}
-                                            selectedColleges={selectedColleges}
-                                            selectedParameters={selectedParameters}
-                                            onCollegesChange={setSelectedColleges}
-                                            onParametersChange={setSelectedParameters}
-                                            isLoading={loading}
-                                            iterationId={currentIterationId}
-                                            isSubsequentIteration={isSubsequentIteration}
-                                            key={`selection-controls-${currentIterationId}`}
-                                        />
-                                    </CardContent>
-                                </Card>
+                                <SelectionControls
+                                    colleges={colleges}
+                                    parameters={parameters}
+                                    selectedColleges={selectedColleges}
+                                    selectedParameters={selectedParameters}
+                                    onCollegesChange={setSelectedColleges}
+                                    onParametersChange={setSelectedParameters}
+                                    isLoading={loading}
+                                    iterationId={currentIterationId}
+                                    isSubsequentIteration={isSubsequentIteration}
+                                    key={`selection-controls-${currentIterationId}`}
+                                />
                             </div>
                             
                             <Card>
