@@ -46,9 +46,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   const [collegeOptions, setCollegeOptions] = useState<SortingOptions>({
     sortBy: 'original',
     filterBy: 'all',
-    searchQuery: '',
-    nirfRangeMin: 1,
-    nirfRangeMax: colleges.length
+    searchQuery: ''
   });
 
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
@@ -73,24 +71,17 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
       result = result.filter(college => !selectedColleges.includes(college.Name));
     }
 
-    // Apply NIRF rank range filter if set
-    if (collegeOptions.nirfRangeMin !== undefined && collegeOptions.nirfRangeMax !== undefined) {
-      // The index in the array + 1 is considered the NIRF rank
-      const indexed = result.map((college, index) => ({ college, initialIndex: index + 1 }));
-      result = indexed
-        .filter(item => 
-          item.initialIndex >= collegeOptions.nirfRangeMin! && 
-          item.initialIndex <= collegeOptions.nirfRangeMax!
-        )
-        .map(item => item.college);
-    }
-
     // Apply sorting
     if (collegeOptions.sortBy === 'alphabetical') {
       result.sort((a, b) => a.Name.localeCompare(b.Name));
     } else if (collegeOptions.sortBy === 'nirf') {
-      // NIRF sorting is based on the original order
-      // No need to sort as the original order is the NIRF rank
+      // NIRF sorting is based on the original order in the 'colleges' array
+      // Ensure we're sorting back to the original order
+      result.sort((a, b) => {
+        const indexA = colleges.findIndex(c => c.Name === a.Name);
+        const indexB = colleges.findIndex(c => c.Name === b.Name);
+        return indexA - indexB;
+      });
     } else if (collegeOptions.sortBy === 'parameter' && collegeOptions.sortParameter) {
       // Sort by specific parameter (descending - higher values first)
       result.sort((a, b) => {
@@ -162,37 +153,61 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredColleges.map((college) => (
-                <CommandItem
+              {filteredColleges.map((college, index) => (
+                <div
                   key={college.Name}
-                  onSelect={() => handleCollegeSelect(college)}
-                  className="flex items-center py-2 px-4"
+                  onClick={() => handleCollegeSelect(college)}
+                  className={cn(
+                    "flex items-center justify-between py-3 px-4 cursor-pointer rounded-sm hover:bg-accent hover:text-accent-foreground",
+                    selectedColleges.includes(college.Name) && "bg-primary/10"
+                  )}
                 >
-                  <div className={cn(
-                    "h-4 w-4 mr-2 border rounded-sm flex items-center justify-center",
-                    selectedColleges.includes(college.Name)
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-muted-foreground"
-                  )}>
-                    {selectedColleges.includes(college.Name) && <Check className="h-3 w-3" />}
-                  </div>
-                  <div className="flex flex-col flex-1">
-                    <div className="font-medium">{college.Name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      ID: {college['Unnamed: 0']} {collegeOptions.sortBy === 'nirf' ? `• NIRF Rank: ${colleges.findIndex(c => c.Name === college.Name) + 1}` : ''}
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "flex h-5 w-5 items-center justify-center rounded-sm border",
+                      selectedColleges.includes(college.Name)
+                        ? "border-primary bg-primary text-primary-foreground" 
+                        : "border-muted-foreground"
+                    )}>
+                      {selectedColleges.includes(college.Name) && <Check className="h-3.5 w-3.5" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{college.Name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        ID: {college['Unnamed: 0']} 
+                        {collegeOptions.sortBy === 'nirf' && ` • NIRF Rank: ${colleges.findIndex(c => c.Name === college.Name) + 1}`}
+                      </div>
                     </div>
                   </div>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="ml-2 h-6 w-6">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCollege(college);
+                        }}
+                      >
                         <ArrowUpRight className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                      <CollegeDetails college={college} parameters={parameters} />
+                    <DialogContent onClick={(e) => e.stopPropagation()}>
+                      <DialogHeader>
+                        <DialogTitle>College Details</DialogTitle>
+                        <DialogDescription>
+                          Detailed information about {selectedCollege?.Name}
+                        </DialogDescription>
+                      </DialogHeader>
+                      {selectedCollege && (
+                        <CollegeDetails 
+                          college={selectedCollege} 
+                        />
+                      )}
                     </DialogContent>
                   </Dialog>
-                </CommandItem>
+                </div>
               ))}
             </div>
           )}
