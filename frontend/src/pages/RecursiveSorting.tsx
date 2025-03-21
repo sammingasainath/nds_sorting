@@ -393,21 +393,6 @@ export const RecursiveSorting: React.FC = () => {
 
                     <TabsContent value="selection" className="space-y-6">
                         <div className="grid grid-cols-1 gap-6">
-                            <div className="w-full">
-                                <SelectionControls
-                                    colleges={colleges}
-                                    parameters={parameters}
-                                    selectedColleges={selectedColleges}
-                                    selectedParameters={selectedParameters}
-                                    onCollegesChange={setSelectedColleges}
-                                    onParametersChange={setSelectedParameters}
-                                    isLoading={loading}
-                                    iterationId={currentIterationId}
-                                    isSubsequentIteration={isSubsequentIteration}
-                                    key={`selection-controls-${currentIterationId}`}
-                                />
-                            </div>
-                            
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <Card>
                                     <CardHeader>
@@ -436,6 +421,31 @@ export const RecursiveSorting: React.FC = () => {
                                         <ImprovedParameterSuggestion 
                                             availableParameters={parameters}
                                             onParametersSelected={setSelectedParameters}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </div>
+                            
+                            <div className="w-full">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>College Selection</CardTitle>
+                                        <CardDescription>
+                                            Select colleges to compare using your chosen parameters
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <SelectionControls
+                                            colleges={colleges}
+                                            parameters={parameters}
+                                            selectedColleges={selectedColleges}
+                                            selectedParameters={selectedParameters}
+                                            onCollegesChange={setSelectedColleges}
+                                            onParametersChange={setSelectedParameters}
+                                            isLoading={loading}
+                                            iterationId={currentIterationId}
+                                            isSubsequentIteration={isSubsequentIteration}
+                                            key={`selection-controls-${currentIterationId}`}
                                         />
                                     </CardContent>
                                 </Card>
