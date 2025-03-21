@@ -130,7 +130,7 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -163,7 +163,7 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full max-w-screen-lg p-0" align="start" sideOffset={5}>
+      <PopoverContent className="w-full p-0" side="bottom" align="start" sideOffset={5} style={{ maxWidth: '100%', width: '100%' }}>
         <Command className="w-full">
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />

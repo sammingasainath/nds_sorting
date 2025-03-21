@@ -425,7 +425,7 @@ export const RecursiveSorting: React.FC = () => {
                                                 AI Suggestions
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-full max-w-screen-lg p-4" align="start" sideOffset={5}>
+                                        <PopoverContent className="w-full p-0" side="bottom" align="start" sideOffset={5} style={{ maxWidth: '100%', width: '100%' }}>
                                             <ImprovedParameterSuggestion 
                                                 availableParameters={parameters}
                                                 onParametersSelected={setSelectedParameters}

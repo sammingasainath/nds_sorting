@@ -99,7 +99,7 @@ export const ImprovedParameterSuggestion: React.FC<ImprovedParameterSuggestionPr
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <div className="space-y-2">
         <label htmlFor="userGoal" className="block text-sm font-medium">
           What are you looking for in a college?
