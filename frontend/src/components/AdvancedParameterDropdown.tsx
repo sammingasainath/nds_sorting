@@ -163,8 +163,8 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
-        <Command>
+      <PopoverContent className="w-full max-w-screen-lg p-0" align="start" sideOffset={5}>
+        <Command className="w-full">
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <CommandInput
@@ -202,7 +202,7 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
           
           <CommandEmpty>No parameters found.</CommandEmpty>
           <CommandList>
-            <ScrollArea className="h-[300px]">
+            <ScrollArea className="h-[400px]">
               {Object.entries(parametersByCategory).map(([category, params]) => {
                 // Skip if this category should be filtered out
                 if (activeCategory && category !== activeCategory) return null;
