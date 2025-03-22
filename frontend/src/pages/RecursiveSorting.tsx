@@ -25,13 +25,6 @@ import { parameterInfo } from '@/lib/parameterInfo';
 import { AdvancedParameterDropdown } from '@/components/AdvancedParameterDropdown';
 import { ImprovedParameterSuggestion } from '@/components/ImprovedParameterSuggestion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ParameterCodeList } from '@/components/ParameterCodeList';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export const RecursiveSorting: React.FC = () => {
     const {

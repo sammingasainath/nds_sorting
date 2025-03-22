@@ -6,7 +6,6 @@ import { AboutPage } from '@/pages/AboutPage';
 import { ComparisonPage } from '@/pages/ComparisonPage';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { UITestPage } from '@/pages/UITestPage';
 
 export const router = createBrowserRouter([
     {
@@ -37,11 +36,6 @@ export const router = createBrowserRouter([
             {
                 path: 'about',
                 element: <AboutPage />,
-                errorElement: <ErrorBoundary />
-            },
-            {
-                path: 'ui-test',
-                element: <UITestPage />,
                 errorElement: <ErrorBoundary />
             }
         ]

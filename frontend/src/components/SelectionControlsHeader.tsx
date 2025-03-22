@@ -145,7 +145,6 @@ export const SelectionControlsHeader: React.FC<SelectionControlsHeaderProps> = (
                     <SelectContent>
                         <SelectItem value="original">Original Order</SelectItem>
                         <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                        <SelectItem value="nirf">NIRF Rank</SelectItem>
                         {parameters && (
                             <SelectItem value="parameter">By Parameter</SelectItem>
                         )}

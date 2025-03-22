@@ -81,14 +81,6 @@ export const LandingPage = () => {
               >
                 Learn More
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate('/ui-test')}
-                className="absolute top-4 right-4"
-              >
-                Test UI
-              </Button>
             </motion.div>
 
             <motion.div
