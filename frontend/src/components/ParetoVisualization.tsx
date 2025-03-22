@@ -393,8 +393,8 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                         dialog.style.top = '50%';
                                                         dialog.style.left = '50%';
                                                         dialog.style.transform = 'translate(-50%, -50%)';
-                                                        dialog.style.backgroundColor = isDarkMode ? 'var(--background, #1e1e2e)' : 'var(--background, white)';
-                                                        dialog.style.color = isDarkMode ? 'var(--foreground, #e1e1e6)' : 'var(--foreground, #1e1e2e)';
+                                                        dialog.style.backgroundColor = isDarkMode ? '#1e1e2e' : '#ffffff';
+                                                        dialog.style.color = isDarkMode ? '#e1e1e6' : '#1e1e2e';
                                                         dialog.style.padding = '24px';
                                                         dialog.style.borderRadius = '12px';
                                                         dialog.style.border = `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`;
@@ -441,10 +441,10 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                         // Create content
                                                         const content = document.createElement('div');
                                                         content.innerHTML = `
-                                                            <h3 id="outlier-dialog-title" style="margin-top:0;font-size:16px;font-weight:600;margin-bottom:16px;padding-right:20px;color:${isDarkMode ? 'var(--foreground, #e1e1e6)' : 'var(--foreground, #1e1e2e)'}">
+                                                            <h3 id="outlier-dialog-title" style="margin-top:0;font-size:16px;font-weight:600;margin-bottom:16px;padding-right:20px;color:${isDarkMode ? '#e1e1e6' : '#1e1e2e'}">
                                                                 Parameter Values Below Group Average
                                                             </h3>
-                                                            <p style="font-size:14px;color:${isDarkMode ? 'var(--muted-foreground, #a1a1aa)' : 'var(--muted-foreground, #666)'};margin-bottom:16px;">
+                                                            <p style="font-size:14px;color:${isDarkMode ? '#a1a1aa' : '#666666'};margin-bottom:16px;">
                                                                 The following parameters have values significantly lower than other colleges in this group.
                                                                 This is a statistical observation and doesn't necessarily indicate quality issues.
                                                             </p>
@@ -454,25 +454,25 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                                     return `
                                                                         <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};">
                                                                             <div style="display:flex;justify-content:space-between;align-items:start;">
-                                                                                <div style="font-weight:500;color:${isDarkMode ? 'var(--foreground, #e1e1e6)' : 'var(--foreground, #1e1e2e)'}">${paramInfo.fullName || o.parameter}</div>
+                                                                                <div style="font-weight:500;color:${isDarkMode ? '#e1e1e6' : '#1e1e2e'}">${paramInfo.fullName || o.parameter}</div>
                                                                                 <div style="font-size:12px;padding:2px 6px;border-radius:4px;background:${isDarkMode ? '#443b07' : '#FEF9C3'};color:${isDarkMode ? '#f7de3f' : '#854D0E'};">
                                                                                     ${o.percentageBelowMean.toFixed(0)}% below average
                                                                                 </div>
                                                                             </div>
-                                                                            <div style="font-size:12px;color:${isDarkMode ? 'var(--muted-foreground, #a1a1aa)' : 'var(--muted-foreground, #666)'};margin-top:4px;">
+                                                                            <div style="font-size:12px;color:${isDarkMode ? '#a1a1aa' : '#666666'};margin-top:4px;">
                                                                                 <span>${paramInfo.category}</span>
                                                                                 ${paramInfo.weight ? `<span style="margin-left:6px;background:${isDarkMode ? '#082f49' : '#E0F2FE'};color:${isDarkMode ? '#7dd3fc' : '#075985'};padding:1px 4px;border-radius:4px;">Weight: ${paramInfo.weight}%</span>` : ''}
                                                                             </div>
-                                                                            <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:8px;color:${isDarkMode ? 'var(--muted-foreground, #a1a1aa)' : 'var(--muted-foreground, #666)'};">
-                                                                                <span>College value: <strong style="color:${isDarkMode ? 'var(--foreground, #e1e1e6)' : 'var(--foreground, #1e1e2e)'}">${o.value.toFixed(2)}</strong></span>
-                                                                                <span>Group average: <strong style="color:${isDarkMode ? 'var(--foreground, #e1e1e6)' : 'var(--foreground, #1e1e2e)'}">${(o.value + o.percentageBelowMean * o.value / 100).toFixed(2)}</strong></span>
+                                                                            <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:8px;color:${isDarkMode ? '#a1a1aa' : '#666666'};">
+                                                                                <span>College value: <strong style="color:${isDarkMode ? '#e1e1e6' : '#1e1e2e'}">${o.value.toFixed(2)}</strong></span>
+                                                                                <span>Group average: <strong style="color:${isDarkMode ? '#e1e1e6' : '#1e1e2e'}">${(o.value + o.percentageBelowMean * o.value / 100).toFixed(2)}</strong></span>
                                                                             </div>
-                                                                            <div style="font-size:12px;margin-top:8px;color:${isDarkMode ? 'var(--muted-foreground, #a1a1aa)' : 'var(--muted-foreground, #666)'}">${paramInfo.description}</div>
+                                                                            <div style="font-size:12px;margin-top:8px;color:${isDarkMode ? '#a1a1aa' : '#666666'}">${paramInfo.description}</div>
                                                                         </div>
                                                                     `;
                                                                 }).join('')}
                                                             </div>
-                                                            <div style="font-size:12px;color:${isDarkMode ? 'var(--muted-foreground, #a1a1aa)' : 'var(--muted-foreground, #666)'};margin-top:16px;padding-top:8px;border-top:1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};">
+                                                            <div style="font-size:12px;color:${isDarkMode ? '#a1a1aa' : '#666666'};margin-top:16px;padding-top:8px;border-top:1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};">
                                                                 These parameters may require attention if they align with your priorities, or may be less relevant depending on your specific interests.
                                                             </div>
                                                         `;
@@ -510,8 +510,8 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                                     // Update dialog theme if it changed
                                                                     if (newIsDarkMode !== isDarkMode) {
                                                                         // Update dialog styles
-                                                                        dialog.style.backgroundColor = newIsDarkMode ? 'var(--background, #1e1e2e)' : 'var(--background, white)';
-                                                                        dialog.style.color = newIsDarkMode ? 'var(--foreground, #e1e1e6)' : 'var(--foreground, #1e1e2e)';
+                                                                        dialog.style.backgroundColor = newIsDarkMode ? '#1e1e2e' : '#ffffff';
+                                                                        dialog.style.color = newIsDarkMode ? '#e1e1e6' : '#1e1e2e';
                                                                         dialog.style.border = `1px solid ${newIsDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`;
                                                                         backdrop.style.backgroundColor = newIsDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)';
                                                                         
