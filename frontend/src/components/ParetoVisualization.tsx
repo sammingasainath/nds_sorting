@@ -222,13 +222,6 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         return Array.from(allParams);
     }, [colleges]);
     
-    // Initialize selected parameters with any already selected parameter
-    useEffect(() => {
-        if (selectedParameters.length === 0 && selectedParameter) {
-            setSelectedParameters([selectedParameter]);
-        }
-    }, [selectedParameter, selectedParameters]);
-    
     // Get outliers
     const outliers = showOutliers ? detectOutliers(colleges, availableParameters) : [];
     
@@ -347,7 +340,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         <div className={cn("mb-6 relative", frontNumber > 0 && "mt-8")}>
             <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">Optimal Group {frontNumber + 1}</h3>
+                    <h3 className="text-lg font-semibold">Optimal Group {frontNumber}</h3>
                     <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleSelectAll()}>
                         Select All
                     </Button>
@@ -456,9 +449,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                         <p className="text-sm text-muted-foreground">
                                             Select the parameters to include in equal weightage calculation
                                         </p>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm"
+                    <Button
+                        variant="outline"
+                        size="sm"
                                             onClick={() => setSelectedParameters(
                                                 selectedParameters.length === availableParameters.length 
                                                     ? [] 
@@ -466,7 +459,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                             )}
                                         >
                                             {selectedParameters.length === availableParameters.length ? 'Deselect All' : 'Select All'}
-                                        </Button>
+                    </Button>
                                     </div>
                                     <div className="space-y-3">
                                         {availableParameters.map(param => {
@@ -525,21 +518,21 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                             return (
                                 <div
                                     key={collegeId}
-                                    className={cn(
-                                        "p-3 rounded-md border transition-colors",
+                        className={cn(
+                            "p-3 rounded-md border transition-colors",
                                         isSelected(collegeId)
-                                            ? "bg-primary/10 border-primary/30"
+                                ? "bg-primary/10 border-primary/30"
                                             : "bg-background hover:bg-accent/5 border-border",
                                         collegeOutliers.length > 0 && showOutliers 
                                             ? "border-yellow-500 bg-yellow-500/5 shadow-sm" 
                                             : ""
-                                    )}
+                        )}
                                     onClick={() => handleCollegeSelect(collegeId)}
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <Checkbox
+                    >
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
                                                     checked={isSelected(collegeId)}
                                                     onCheckedChange={() => handleCollegeSelect(collegeId)}
                                                     onClick={(e) => e.stopPropagation()}
@@ -745,9 +738,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                     </span>
                                                 )}
                                             </div>
-                                        </div>
-                                    </div>
                                 </div>
+                            </div>
+                        </div>
                             );
                         })}
                     </div>
