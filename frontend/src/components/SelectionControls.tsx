@@ -39,8 +39,6 @@ interface SelectionControlsProps {
   onCollegesChange: (colleges: string[]) => void;
   onParametersChange: (parameters: string[]) => void;
   isLoading?: boolean;
-  iterationId?: string;
-  isSubsequentIteration?: boolean;
   searchQuery?: string;
   sortBy?: string;
 }
@@ -53,13 +51,11 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   onCollegesChange,
   onParametersChange,
   isLoading = false,
-  iterationId,
-  isSubsequentIteration,
   searchQuery = '',
-  sortBy = 'nirf'
+  sortBy = 'nirf',
 }) => {
   const [collegeOptions, setCollegeOptions] = useState<SortingOptions>({
-    sortBy: sortBy as SortingOptions['sortBy'],
+    sortBy: sortBy,
     filterBy: 'all',
     searchQuery: searchQuery
   });
@@ -159,7 +155,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   useEffect(() => {
     setCollegeOptions(prev => ({
       ...prev,
-      sortBy: sortBy as SortingOptions['sortBy'],
+      sortBy: sortBy,
       searchQuery: searchQuery
     }));
   }, [sortBy, searchQuery]);
@@ -174,6 +170,88 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <div className="flex-1 min-w-[200px]">
+          <div className="relative">
+            <input
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Search colleges..."
+              value={collegeOptions.searchQuery}
+              onChange={(e) => setCollegeOptions(prev => ({ ...prev, searchQuery: e.target.value }))}
+            />
+          </div>
+        </div>
+        
+        <div className="flex gap-2 flex-wrap">
+          <Select
+            value={collegeOptions.sortBy}
+            onValueChange={(value) => setCollegeOptions(prev => ({ 
+              ...prev, 
+              sortBy: value,
+              sortParameter: value === 'parameter' ? prev.sortParameter : undefined
+            }))}
+          >
+            <SelectTrigger className="w-[160px]">
+              <div className="flex items-center gap-2">
+                <SortAsc className="h-4 w-4" />
+                <SelectValue placeholder="Sort by" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alphabetical">Alphabetical</SelectItem>
+              <SelectItem value="nirf">NIRF Rank</SelectItem>
+              {selectedParameters.length === 1 ? (
+                <SelectItem value="singleParameter">{selectedParameters[0]}</SelectItem>
+              ) : (
+                parameters.length > 0 && (
+                  <SelectItem value="parameter">By Parameter</SelectItem>
+                )
+              )}
+            </SelectContent>
+          </Select>
+
+          {collegeOptions.sortBy === 'parameter' && parameters.length > 0 && (
+            <Select
+              value={collegeOptions.sortParameter}
+              onValueChange={(value) => setCollegeOptions(prev => ({ ...prev, sortParameter: value }))}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Select parameter" />
+              </SelectTrigger>
+              <SelectContent>
+                {parameters.map(param => (
+                  <SelectItem key={param} value={param}>{param}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select
+            value={collegeOptions.filterBy}
+            onValueChange={(value) => setCollegeOptions(prev => ({ ...prev, filterBy: value }))}
+          >
+            <SelectTrigger className="w-[160px]">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                <SelectValue placeholder="Filter" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Colleges</SelectItem>
+              <SelectItem value="selected">Selected Only</SelectItem>
+              <SelectItem value="unselected">Unselected Only</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button
+            variant="outline"
+            onClick={handleSelectAll}
+          >
+            {filteredColleges.every(c => selectedColleges.includes(c.Name)) ? 'Deselect All' : 'Select All'}
+          </Button>
+        </div>
+      </div>
+
       <ScrollArea className="h-[500px] rounded-md border">
         <div className="p-1">
           {filteredColleges.length === 0 ? (
