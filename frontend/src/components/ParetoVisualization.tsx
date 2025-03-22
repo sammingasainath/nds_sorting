@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, AlertCircle, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, AlertCircle, Info, X } from "lucide-react";
 import { NonDominatedSortingResult } from '@/types';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { parameterInfo } from '@/lib/parameterInfo';
+import { Portal } from '@/components/ui/portal';
 
 // Types
 interface CollegeDetails {
@@ -344,11 +345,6 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                     const collegeId = result.college['Unnamed: 0'] as string;
                     const collegeOutliers = getCollegeOutliers(collegeId);
                     
-                    // Calculate tooltip position - use top for colleges in bottom half of list
-                    const isBottomHalf = index >= sortedColleges.length / 2;
-                    const tooltipSide = isBottomHalf ? "top" : "right";
-                    const tooltipAlign = isBottomHalf ? "center" : "start";
-                    
                     return (
                         <div
                             key={collegeId}
@@ -379,7 +375,116 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                             )}
                                             {result.college.Name as string}
                                             {collegeOutliers.length > 0 && showOutliers && (
+                                                <>
                                                 <span className="ml-2 inline-block w-2 h-2 rounded-full bg-yellow-500" title="Has outliers"></span>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Create a fixed position dialog at the center of the screen
+                                                        const dialog = document.createElement('div');
+                                                        dialog.style.position = 'fixed';
+                                                        dialog.style.top = '50%';
+                                                        dialog.style.left = '50%';
+                                                        dialog.style.transform = 'translate(-50%, -50%)';
+                                                        dialog.style.backgroundColor = document.body.classList.contains('dark') ? '#1e1e2e' : 'white';
+                                                        dialog.style.color = document.body.classList.contains('dark') ? '#e1e1e6' : '#1e1e2e';
+                                                        dialog.style.padding = '24px';
+                                                        dialog.style.borderRadius = '12px';
+                                                        dialog.style.boxShadow = document.body.classList.contains('dark') 
+                                                            ? '0 10px 25px rgba(0, 0, 0, 0.5)' 
+                                                            : '0 10px 25px rgba(0, 0, 0, 0.2)';
+                                                        dialog.style.maxWidth = '550px';
+                                                        dialog.style.width = '90%';
+                                                        dialog.style.maxHeight = '80vh';
+                                                        dialog.style.overflow = 'auto';
+                                                        dialog.style.zIndex = '9999';
+                                                        
+                                                        // Create close button
+                                                        const closeBtn = document.createElement('button');
+                                                        closeBtn.innerHTML = '&times;';
+                                                        closeBtn.style.position = 'absolute';
+                                                        closeBtn.style.top = '16px';
+                                                        closeBtn.style.right = '16px';
+                                                        closeBtn.style.border = 'none';
+                                                        closeBtn.style.background = 'none';
+                                                        closeBtn.style.fontSize = '28px';
+                                                        closeBtn.style.cursor = 'pointer';
+                                                        closeBtn.style.color = document.body.classList.contains('dark') ? '#e1e1e6' : '#1e1e2e';
+                                                        closeBtn.style.opacity = '0.7';
+                                                        closeBtn.style.transition = 'opacity 0.2s';
+                                                        closeBtn.onmouseover = () => { closeBtn.style.opacity = '1'; };
+                                                        closeBtn.onmouseout = () => { closeBtn.style.opacity = '0.7'; };
+                                                        closeBtn.onclick = () => {
+                                                            document.body.removeChild(backdrop);
+                                                            document.body.removeChild(dialog);
+                                                        };
+                                                        dialog.appendChild(closeBtn);
+                                                        
+                                                        // Create content
+                                                        const content = document.createElement('div');
+                                                        content.innerHTML = `
+                                                            <h3 style="margin-top:0;font-size:16px;font-weight:600;margin-bottom:16px;padding-right:20px;">
+                                                                Parameter Values Below Group Average
+                                                            </h3>
+                                                            <p style="font-size:14px;color:#666;margin-bottom:16px;">
+                                                                The following parameters have values significantly lower than other colleges in this group.
+                                                                This is a statistical observation and doesn't necessarily indicate quality issues.
+                                                            </p>
+                                                            <div style="margin-top:16px;">
+                                                                ${collegeOutliers.map(o => {
+                                                                    const paramInfo = getParameterInfo(o.parameter);
+                                                                    return `
+                                                                        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #eee;">
+                                                                            <div style="display:flex;justify-content:space-between;align-items:start;">
+                                                                                <div style="font-weight:500;">${paramInfo.fullName || o.parameter}</div>
+                                                                                <div style="font-size:12px;padding:2px 6px;border-radius:4px;background:#FEF9C3;color:#854D0E;">
+                                                                                    ${o.percentageBelowMean.toFixed(0)}% below average
+                                                                                </div>
+                                                                            </div>
+                                                                            <div style="font-size:12px;color:#666;margin-top:4px;">
+                                                                                <span>${paramInfo.category}</span>
+                                                                                ${paramInfo.weight ? `<span style="margin-left:6px;background:#E0F2FE;color:#075985;padding:1px 4px;border-radius:4px;">Weight: ${paramInfo.weight}%</span>` : ''}
+                                                                            </div>
+                                                                            <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:8px;">
+                                                                                <span>College value: <strong>${o.value.toFixed(2)}</strong></span>
+                                                                                <span>Group average: <strong>${(o.value + o.percentageBelowMean * o.value / 100).toFixed(2)}</strong></span>
+                                                                            </div>
+                                                                            <div style="font-size:12px;margin-top:8px;">${paramInfo.description}</div>
+                                                                        </div>
+                                                                    `;
+                                                                }).join('')}
+                                                            </div>
+                                                            <div style="font-size:12px;color:#666;margin-top:16px;padding-top:8px;border-top:1px solid #eee;">
+                                                                These parameters may require attention if they align with your priorities, or may be less relevant depending on your specific interests.
+                                                            </div>
+                                                        `;
+                                                        dialog.appendChild(content);
+                                                        
+                                                        // Add backdrop
+                                                        const backdrop = document.createElement('div');
+                                                        backdrop.style.position = 'fixed';
+                                                        backdrop.style.top = '0';
+                                                        backdrop.style.left = '0';
+                                                        backdrop.style.width = '100%';
+                                                        backdrop.style.height = '100%';
+                                                        backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                                                        backdrop.style.zIndex = '9998';
+                                                        backdrop.onclick = () => {
+                                                            document.body.removeChild(backdrop);
+                                                            document.body.removeChild(dialog);
+                                                        };
+                                                        
+                                                        // Add to body
+                                                        document.body.appendChild(backdrop);
+                                                        document.body.appendChild(dialog);
+                                                    }}
+                                                    className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full flex items-center gap-1 text-xs"
+                                                >
+                                                    <AlertCircle className="h-3 w-3" />
+                                                    <span>Outlier in:</span>
+                                                    <span className="font-medium">{collegeOutliers.map(o => o.parameter).join(', ')}</span>
+                                                </button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -393,73 +498,6 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                             <span className="font-medium text-primary">
                                                 {selectedParameter}: {result.college[selectedParameter] || 'N/A'}
                                             </span>
-                                        )}
-                                        
-                                        {/* Show outlier indicators */}
-                                        {collegeOutliers.length > 0 && showOutliers && (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <span className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                            <AlertCircle className="h-3 w-3" />
-                                                            <span>Outlier in:</span>
-                                                            <span className="font-medium">{collegeOutliers.map(o => o.parameter).join(', ')}</span>
-                                                        </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent 
-                                                        className="max-w-[400px] p-4 z-50" 
-                                                        side={tooltipSide}
-                                                        align={tooltipAlign}
-                                                        sideOffset={10}
-                                                        avoidCollisions={true}
-                                                        collisionBoundary={document.body}
-                                                        collisionPadding={20}
-                                                        sticky="always"
-                                                        hideWhenDetached={false}
-                                                    >
-                                                        <div className="text-sm space-y-4">
-                                                            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
-                                                                <AlertCircle className="h-4 w-4" />
-                                                                <p className="font-semibold">Parameter Values Below Group Average</p>
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                The following parameters have values significantly lower than other colleges in this group.
-                                                                This is a statistical observation and doesn't necessarily indicate quality issues.
-                                                            </p>
-                                                            <div className="space-y-3 pt-2">
-                                                                {collegeOutliers.map((o, i) => {
-                                                                    const paramInfo = getParameterInfo(o.parameter);
-                                                                    return (
-                                                                        <div key={i} className="space-y-1 pb-3 border-b border-muted last:border-0 last:pb-0">
-                                                                            <div className="flex justify-between items-start">
-                                                                                <div className="font-medium">{paramInfo.fullName || o.parameter}</div>
-                                                                                <div className="text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                                                                    {o.percentageBelowMean.toFixed(0)}% below average
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="text-xs text-muted-foreground">
-                                                                                <span className="inline-block mr-1">{paramInfo.category}</span>
-                                                                                {paramInfo.weight && <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-1 rounded">Weight: {paramInfo.weight}%</span>}
-                                                                            </div>
-                                                                            <div className="flex justify-between items-center text-xs mt-1">
-                                                                                <span>College value: <strong>{o.value.toFixed(2)}</strong></span>
-                                                                                <span>Group average: <strong>{(o.value + o.percentageBelowMean * o.value / 100).toFixed(2)}</strong></span>
-                                                                            </div>
-                                                                            <div className="text-xs mt-1">{paramInfo.description}</div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                            <div className="pt-2 text-xs text-muted-foreground border-t border-muted">
-                                                                <p className="flex items-center gap-1">
-                                                                    <Info className="h-3 w-3" />
-                                                                    These parameters may require attention if they align with your priorities, or may be less relevant depending on your specific interests.
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
                                         )}
                                     </div>
                                 </div>
