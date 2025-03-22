@@ -76,43 +76,62 @@
   }
 }
 
-/* Add styles for the floating parameter list */
-.parameter-code-list {
+/* Parameter code tooltips */
+.parameter-code {
   position: relative;
+  cursor: help;
+  border-bottom: 1px dashed;
 }
 
-.parameter-code-list .parameter-item {
-  position: relative;
-  padding: 8px 10px;
-  border-radius: 4px;
-  margin-bottom: 2px;
-  transition: all 0.2s;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.parameter-code-list .parameter-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.parameter-code-list .parameter-tooltip {
-  position: absolute;
-  left: -9999px;
-  background-color: hsl(var(--popover-foreground));
-  color: hsl(var(--popover));
+.parameter-code .tooltip-content {
+  visibility: hidden;
+  width: 300px;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
   border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 0.875rem;
-  z-index: 50;
-  max-width: 300px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 10px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -150px;
   opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
+  transition: opacity 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
 }
 
-.parameter-code-list .parameter-item:hover .parameter-tooltip {
-  left: calc(100% + 10px);
+.parameter-code:hover .tooltip-content {
+  visibility: visible;
   opacity: 1;
+}
+
+.parameter-code .tooltip-content h4 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.parameter-code .tooltip-content p {
+  margin: 5px 0;
+  font-size: 0.9em;
+}
+
+.parameter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  max-width: 500px;
+}
+
+/* Fix dropdown scrolling issue */
+[data-radix-popper-content-wrapper] {
+  position: absolute !important;
+  z-index: 50 !important;
+}
+
+.scrollable-dropdown-content {
+  max-height: 60vh;
+  overflow-y: auto;
 }

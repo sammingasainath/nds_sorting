@@ -198,10 +198,10 @@ export const ComparisonPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {/* Parameter selection dropdown styled like in the explore page */}
-            <div className="mb-4">
+            <div className="mb-4 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-[220px] justify-between">
+                  <Button variant="outline" className="w-full justify-between">
                     <div className="flex flex-col items-start">
                       <span className="font-medium text-sm">Select Parameters</span>
                       <span className="text-xs text-muted-foreground">
@@ -211,7 +211,7 @@ export const ComparisonPage: React.FC = () => {
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="p-0 w-[350px]" align="end">
+                <DropdownMenuContent className="p-0 w-full max-w-screen-md scrollable-dropdown-content" align="start" sideOffset={4}>
                   <ParameterSelector
                     parameters={parameters}
                     selectedParameters={selectedParameters}
