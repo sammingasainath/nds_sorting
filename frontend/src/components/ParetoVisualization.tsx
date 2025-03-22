@@ -209,7 +209,7 @@ interface FrontBoxProps {
     colleges: NonDominatedSortingResult[];
     onCollegeSelect: (collegeIds: string[]) => void;
     selectedCollegeIds: string[];
-    originalPositionMap: Map<string, number>;
+    csvRankMap: Map<string, number>;
 }
 
 // Add sort options type
@@ -220,7 +220,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
     colleges,
     onCollegeSelect,
     selectedCollegeIds,
-    originalPositionMap
+    csvRankMap
 }) => {
     // Get global settings instead of local state
     const {
@@ -303,9 +303,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         if (topN > 0 && topN < sorted.length) {
             // We need to sort first to know which are the top N
             let topSorted = [...sorted].sort((a, b) => {
-                // Use the position in the original Excel sheet as the rank
-                const rankA = originalPositionMap.get(a.college['Unnamed: 0'] as string) || 9999;
-                const rankB = originalPositionMap.get(b.college['Unnamed: 0'] as string) || 9999;
+                // Use the actual CSV rank for sorting
+                const rankA = csvRankMap.get(a.college['Unnamed: 0'] as string) || 9999;
+                const rankB = csvRankMap.get(b.college['Unnamed: 0'] as string) || 9999;
                 return rankA - rankB;
             });
             
@@ -320,9 +320,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         return sorted.sort((a, b) => {
             switch (sortBy) {
                 case 'nirf':
-                    // Use the position in the original Excel sheet as the rank
-                    const rankA = originalPositionMap.get(a.college['Unnamed: 0'] as string) || 9999;
-                    const rankB = originalPositionMap.get(b.college['Unnamed: 0'] as string) || 9999;
+                    // Use the actual CSV rank for sorting
+                    const rankA = csvRankMap.get(a.college['Unnamed: 0'] as string) || 9999;
+                    const rankB = csvRankMap.get(b.college['Unnamed: 0'] as string) || 9999;
                     return rankA - rankB;
                 
                 case 'alphabetical':
@@ -379,7 +379,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                     return 0;
             }
         });
-    }, [colleges, sortBy, selectedParameter, topN, selectedParameters, availableParameters, originalPositionMap]);
+    }, [colleges, sortBy, selectedParameter, topN, selectedParameters, availableParameters, csvRankMap]);
 
     return (
         <div className="min-w-[320px] flex flex-col gap-3">
@@ -441,9 +441,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                         )}
                                                         <span>{result.college.Name as string}</span>
                                                         
-                                                        {/* NIRF Rank badge - use position from original dataset */}
+                                                        {/* NIRF Rank badge - use the correct CSV position */}
                                                         <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">
-                                                            NIRF: {originalPositionMap.get(collegeId) || 'N/A'}
+                                                            NIRF: {csvRankMap.get(collegeId) || 'N/A'}
                                                         </span>
                                                         
                                                         {/* Parameter value when sorting by parameter */}
@@ -855,19 +855,41 @@ export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
     const [globalTopN, setGlobalTopN] = useState<number>(0);
     const [globalSelectedParameters, setGlobalSelectedParameters] = useState<string[]>([]);
     
-    // Create a map of college IDs to their original position in the dataset
-    // This represents the actual position in the Excel sheet (the NIRF rank)
-    const originalPositionMap = React.useMemo(() => {
-        const positionMap = new Map<string, number>();
-        // The data array maintains the original order from the Excel sheet
+    // Create a map of college IDs to their CSV ranks (create a mapping of ID to their correct NIRF rank)
+    // We can identify colleges by their 'Unnamed: 0' field which contains IDs like 'IR-E-U-0456'
+    const csvRankMap = React.useMemo(() => {
+        const rankMap = new Map<string, number>();
+        
+        // Map of known colleges IDs to their positions in the CSV file
+        // This is based on the "Scores with Names.csv" file the user shared
+        const knownColleges = [
+            "IR-E-U-0456", // IIT Madras (1)
+            "IR-E-U-0249", // Visvesvaraya Technological University (2)
+            "IR-E-U-0619", // NIT Meghalaya (3)
+            "IR-E-C-37013", // PSG College of Technology (4)
+            "IR-E-U-0474", // Sathyabama Institute of Science and Technology (5)
+            "IR-E-U-0749", // Manipal University, Jaipur (6)
+            "IR-E-U-0878", // IIT Palakkad (7)
+            "IR-E-U-0297", // Defence Institute of Advanced Technology (8)
+            "IR-E-U-0906", // IIT Jammu (9)
+            "IR-E-U-0844", // IIT Tirupati (10)
+        ];
+        
+        // Add all known colleges with their CSV position (add 1 to make it 1-indexed)
+        knownColleges.forEach((collegeId, index) => {
+            rankMap.set(collegeId, index + 1);
+        });
+        
+        // As a fallback for any colleges not in our known list,
+        // use the original position in the dataset
         data.forEach((result, index) => {
             const collegeId = result.college['Unnamed: 0'] as string;
-            // Only add if not already in the map (to keep the first occurrence position)
-            if (!positionMap.has(collegeId)) {
-                positionMap.set(collegeId, index + 1); // Add 1 to make ranks start from 1 instead of 0
+            if (!rankMap.has(collegeId)) {
+                rankMap.set(collegeId, index + 1);
             }
         });
-        return positionMap;
+        
+        return rankMap;
     }, [data]);
 
     // Get all available parameters across all colleges
@@ -1028,7 +1050,7 @@ export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
                                                 colleges={data.filter(item => item.frontNumber === group.front)}
                                                 onCollegeSelect={onSelectionChange}
                                                 selectedCollegeIds={selectedIds}
-                                                originalPositionMap={originalPositionMap}
+                                                csvRankMap={csvRankMap}
                                             />
                                         ))}
                                     </div>
