@@ -115,7 +115,15 @@ interface FrontBoxProps {
 }
 
 // Add sort options type
-type SortOption = 'nirf' | 'alphabetical' | 'parameter';
+type SortOption = 'nirf' | 'alphabetical' | 'parameter' | 'balanced';
+
+// Add an interface for outliers
+interface OutlierInfo {
+    collegeId: string;
+    parameter: string;
+    value: number;
+    threshold: number;
+}
 
 const FrontBox: React.FC<FrontBoxProps> = ({
     frontNumber,
@@ -126,6 +134,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
     // Add state for sorting
     const [sortBy, setSortBy] = useState<SortOption>('nirf');
     const [selectedParameter, setSelectedParameter] = useState<string>('');
+    const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
+    const [topN, setTopN] = useState<number>(3);
+    const [showOutliers, setShowOutliers] = useState<boolean>(true);
 
     const handleCollegeSelect = (collegeId: string) => {
         const newSelection = selectedCollegeIds.includes(collegeId)
@@ -155,6 +166,113 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         !key.startsWith('_')
     ) : [];
 
+    // Function to detect outliers in the front
+    const detectOutliers = (): OutlierInfo[] => {
+        const outliers: OutlierInfo[] = [];
+        
+        if (colleges.length < 3) return outliers; // Need at least 3 colleges to detect outliers
+        
+        availableParameters.forEach(param => {
+            // Extract values for this parameter
+            const values = colleges.map(c => parseFloat(c.college[param] as string) || 0);
+            if (values.every(v => v === 0)) return; // Skip if all values are 0
+            
+            // Calculate statistics
+            const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+            const stdDev = Math.sqrt(
+                values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+            );
+            
+            // Define threshold for outliers (2 standard deviations below mean)
+            const threshold = mean - 1.5 * stdDev;
+            
+            // Find outliers
+            colleges.forEach(college => {
+                const value = parseFloat(college.college[param] as string) || 0;
+                if (value < threshold && value > 0) { // Only consider non-zero values
+                    outliers.push({
+                        collegeId: college.college['Unnamed: 0'] as string,
+                        parameter: param,
+                        value,
+                        threshold
+                    });
+                }
+            });
+        });
+        
+        return outliers;
+    };
+
+    // Get outliers
+    const outliers = showOutliers ? detectOutliers() : [];
+
+    // Calculate balanced scores for equal weightage sorting
+    const calculateBalancedScores = () => {
+        if (selectedParameters.length === 0) return new Map<string, number>();
+        
+        const scores = new Map<string, number>();
+        
+        // First, normalize each parameter
+        const normalizedValues = new Map<string, Map<string, number>>();
+        
+        selectedParameters.forEach(param => {
+            const paramValues = new Map<string, number>();
+            
+            // Get all values for this parameter
+            const values = colleges.map(c => parseFloat(c.college[param] as string) || 0);
+            const maxValue = Math.max(...values);
+            const minValue = Math.min(...values.filter(v => v > 0)) || 0;
+            
+            // Calculate normalized score for each college
+            colleges.forEach(college => {
+                const collegeId = college.college['Unnamed: 0'] as string;
+                const value = parseFloat(college.college[param] as string) || 0;
+                
+                // Skip if value is 0 (often means missing data)
+                if (value === 0) {
+                    paramValues.set(collegeId, 0);
+                    return;
+                }
+                
+                // Normalize to 0-1 scale
+                const normalizedValue = maxValue === minValue 
+                    ? 1 
+                    : (value - minValue) / (maxValue - minValue);
+                
+                paramValues.set(collegeId, normalizedValue);
+            });
+            
+            normalizedValues.set(param, paramValues);
+        });
+        
+        // Calculate average score for each college
+        colleges.forEach(college => {
+            const collegeId = college.college['Unnamed: 0'] as string;
+            let totalScore = 0;
+            let validParamCount = 0;
+            
+            selectedParameters.forEach(param => {
+                const paramValues = normalizedValues.get(param);
+                if (paramValues) {
+                    const score = paramValues.get(collegeId) || 0;
+                    if (score > 0) {
+                        totalScore += score;
+                        validParamCount++;
+                    }
+                }
+            });
+            
+            // Calculate average score, considering only parameters with valid values
+            const avgScore = validParamCount > 0 ? totalScore / validParamCount : 0;
+            scores.set(collegeId, avgScore);
+        });
+        
+        return scores;
+    };
+
+    // Get balanced scores
+    const balancedScores = sortBy === 'balanced' ? calculateBalancedScores() : new Map<string, number>();
+
     // Sort colleges based on selected sort option
     const sortedColleges = [...colleges].sort((a, b) => {
         switch (sortBy) {
@@ -174,13 +292,37 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                 }
                 return 0;
             
+            case 'balanced':
+                const scoreA = balancedScores.get(a.college['Unnamed: 0'] as string) || 0;
+                const scoreB = balancedScores.get(b.college['Unnamed: 0'] as string) || 0;
+                return scoreB - scoreA; // Higher scores first
+            
             default:
                 return 0;
         }
     });
 
+    // For balanced sorting, limit to top N
+    const displayedColleges = sortBy === 'balanced' 
+        ? sortedColleges.slice(0, Math.min(topN, sortedColleges.length))
+        : sortedColleges;
+
+    // Toggle a parameter in the selectedParameters array
+    const toggleParameter = (param: string) => {
+        setSelectedParameters(prev => 
+            prev.includes(param) 
+                ? prev.filter(p => p !== param)
+                : [...prev, param]
+        );
+    };
+
+    // Check if a college has outliers
+    const getCollegeOutliers = (collegeId: string) => {
+        return outliers.filter(o => o.collegeId === collegeId);
+    };
+
     return (
-        <div className="min-w-[300px] border rounded-lg p-4 bg-card">
+        <div className="min-w-[350px] border rounded-lg p-4 bg-card">
             <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold">
                     Optimal Group {frontNumber}
@@ -203,20 +345,28 @@ const FrontBox: React.FC<FrontBoxProps> = ({
             <div className="flex items-center gap-2 mb-3 mt-1">
                 <Select
                     value={sortBy}
-                    onValueChange={(value) => setSortBy(value as SortOption)}
+                    onValueChange={(value) => {
+                        setSortBy(value as SortOption);
+                        if (value === 'balanced' && selectedParameters.length === 0) {
+                            // Auto-select first few parameters if none selected
+                            setSelectedParameters(availableParameters.slice(0, 3));
+                        }
+                    }}
                 >
                     <SelectTrigger className="h-8 text-xs">
                         <div className="flex items-center gap-1">
                             {sortBy === 'nirf' && <SortAsc className="h-3 w-3" />}
                             {sortBy === 'alphabetical' && <ArrowUpDown className="h-3 w-3" />}
                             {sortBy === 'parameter' && <ArrowDown className="h-3 w-3" />}
+                            {sortBy === 'balanced' && <CheckSquare className="h-3 w-3" />}
                             <SelectValue placeholder="Sort by" />
                         </div>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="nirf">NIRF Rank</SelectItem>
                         <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                        <SelectItem value="parameter">Parameter</SelectItem>
+                        <SelectItem value="parameter">Single Parameter</SelectItem>
+                        <SelectItem value="balanced">Equal Weightage</SelectItem>
                     </SelectContent>
                 </Select>
                 
@@ -238,48 +388,148 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                         </SelectContent>
                     </Select>
                 )}
+
+                {/* Show outlier toggle */}
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                variant={showOutliers ? "default" : "outline"} 
+                                size="sm" 
+                                className="h-8 text-xs"
+                                onClick={() => setShowOutliers(!showOutliers)}
+                            >
+                                Outliers
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Show colleges with unusually low parameter values</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
 
+            {/* Equal Weightage Controls */}
+            {sortBy === 'balanced' && (
+                <div className="mb-3 space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                        {availableParameters.map(param => (
+                            <Button
+                                key={param}
+                                variant={selectedParameters.includes(param) ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs h-7"
+                                onClick={() => toggleParameter(param)}
+                            >
+                                {param}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Top:</span>
+                        <Select
+                            value={topN.toString()}
+                            onValueChange={(value) => setTopN(parseInt(value))}
+                        >
+                            <SelectTrigger className="h-8 text-xs w-[80px]">
+                                <SelectValue placeholder="Top N" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {[3, 5, 10, 15, 20].map(n => (
+                                    <SelectItem key={n} value={n.toString()}>
+                                        {n}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+
             <div className="space-y-2">
-                {sortedColleges.map((result) => (
-                    <div
-                        key={result.college['Unnamed: 0']}
-                        className={cn(
-                            "p-3 rounded-md border transition-colors",
-                            isSelected(result.college['Unnamed: 0'])
-                                ? "bg-primary/10 border-primary/30"
-                                : "bg-background hover:bg-accent/5 border-border"
-                        )}
-                        onClick={() => handleCollegeSelect(result.college['Unnamed: 0'])}
-                    >
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        checked={isSelected(result.college['Unnamed: 0'])}
-                                        onCheckedChange={() => handleCollegeSelect(result.college['Unnamed: 0'])}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                    <div className="font-medium text-sm">
-                                        {result.college.Name as string}
+                {displayedColleges.map((result, index) => {
+                    const collegeId = result.college['Unnamed: 0'] as string;
+                    const collegeOutliers = getCollegeOutliers(collegeId);
+                    
+                    return (
+                        <div
+                            key={collegeId}
+                            className={cn(
+                                "p-3 rounded-md border transition-colors",
+                                isSelected(collegeId)
+                                    ? "bg-primary/10 border-primary/30"
+                                    : "bg-background hover:bg-accent/5 border-border",
+                                collegeOutliers.length > 0 && showOutliers ? "border-yellow-500" : ""
+                            )}
+                            onClick={() => handleCollegeSelect(collegeId)}
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            checked={isSelected(collegeId)}
+                                            onCheckedChange={() => handleCollegeSelect(collegeId)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <div className="font-medium text-sm">
+                                            {sortBy === 'balanced' && (
+                                                <span className="mr-2 text-xs bg-primary/20 px-2 py-0.5 rounded-full">
+                                                    #{index + 1}
+                                                </span>
+                                            )}
+                                            {result.college.Name as string}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2 ml-6">
-                                    <span>
-                                        NIRF: {result.college['NIRF 2022 Rank'] || 'N/A'}
-                                    </span>
-                                    
-                                    {/* Show the parameter value when sorting by parameter */}
-                                    {sortBy === 'parameter' && selectedParameter && (
-                                        <span className="font-medium text-primary">
-                                            {selectedParameter}: {result.college[selectedParameter] || 'N/A'}
+                                    <div className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-2 ml-6">
+                                        <span>
+                                            NIRF: {result.college['NIRF 2022 Rank'] || 'N/A'}
                                         </span>
-                                    )}
+                                        
+                                        {/* Show the parameter value when sorting by parameter */}
+                                        {sortBy === 'parameter' && selectedParameter && (
+                                            <span className="font-medium text-primary">
+                                                {selectedParameter}: {result.college[selectedParameter] || 'N/A'}
+                                            </span>
+                                        )}
+
+                                        {/* Show balanced score when using equal weightage */}
+                                        {sortBy === 'balanced' && (
+                                            <span className="font-medium text-primary">
+                                                Score: {(balancedScores.get(collegeId) || 0).toFixed(2)}
+                                            </span>
+                                        )}
+                                        
+                                        {/* Show outlier indicators */}
+                                        {collegeOutliers.length > 0 && showOutliers && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <span className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full">
+                                                            Outlier
+                                                        </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <div className="text-xs space-y-1">
+                                                            <p className="font-semibold">Low values in:</p>
+                                                            {collegeOutliers.map((o, i) => (
+                                                                <p key={i}>
+                                                                    {o.parameter}: {o.value.toFixed(2)} 
+                                                                    <span className="text-muted-foreground ml-1">
+                                                                        (threshold: {o.threshold.toFixed(2)})
+                                                                    </span>
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
