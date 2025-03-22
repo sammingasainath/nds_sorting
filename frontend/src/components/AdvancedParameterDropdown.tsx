@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ChevronDown, Filter, X, Search } from 'lucide-react';
+import { Check, ChevronDown, Filter, X, Search, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -9,6 +9,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ParameterInfoCard } from '@/components/ParameterInfoCard';
 import { parameterInfo } from '@/lib/parameterInfo';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Parameter category colors
 const categoryColors: Record<string, string> = {
@@ -34,6 +40,29 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  
+  // Keep track of the single selected parameter
+  const [singleParameter, setSingleParameter] = useState<string | null>(
+    selectedParameters.length > 0 ? selectedParameters[0] : null
+  );
+  
+  // Update selectedParameters when singleParameter changes
+  useEffect(() => {
+    if (singleParameter) {
+      onParametersChange([singleParameter]);
+    } else {
+      onParametersChange([]);
+    }
+  }, [singleParameter, onParametersChange]);
+  
+  // Update singleParameter when selectedParameters changes externally
+  useEffect(() => {
+    if (selectedParameters.length === 1 && selectedParameters[0] !== singleParameter) {
+      setSingleParameter(selectedParameters[0]);
+    } else if (selectedParameters.length === 0 && singleParameter !== null) {
+      setSingleParameter(null);
+    }
+  }, [selectedParameters, singleParameter]);
   
   // Group parameters by category
   const parametersByCategory = React.useMemo(() => {
@@ -74,63 +103,44 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
     return result;
   }, [parametersByCategory, searchValue, activeCategory]);
 
-  // Toggle parameter selection
-  const toggleParameter = (param: string) => {
-    if (selectedParameters.includes(param)) {
-      onParametersChange(selectedParameters.filter(p => p !== param));
-    } else {
-      onParametersChange([...selectedParameters, param]);
-    }
+  // Set a single parameter as selected
+  const selectParameter = (param: string) => {
+    setSingleParameter(param);
+    setOpen(false);
   };
 
-  // Toggle all parameters in a category
-  const toggleCategory = (category: string) => {
-    const categoryParams = parametersByCategory[category] || [];
-    const allSelected = categoryParams.every(param => selectedParameters.includes(param));
-    
-    if (allSelected) {
-      // Deselect all in category
-      onParametersChange(selectedParameters.filter(param => !categoryParams.includes(param)));
-    } else {
-      // Select all in category
-      const newSelected = [...selectedParameters];
-      categoryParams.forEach(param => {
-        if (!newSelected.includes(param)) {
-          newSelected.push(param);
-        }
-      });
-      onParametersChange(newSelected);
-    }
+  // Clear the selected parameter
+  const clearSelection = () => {
+    setSingleParameter(null);
   };
 
-  // Get the count of selected parameters in each category
-  const getSelectedCountByCategory = (category: string) => {
-    const categoryParams = parametersByCategory[category] || [];
-    return categoryParams.filter(param => selectedParameters.includes(param)).length;
-  };
-
-  // Calculate category selection state
-  const getCategorySelectionState = (category: string) => {
-    const categoryParams = parametersByCategory[category] || [];
-    const selectedCount = getSelectedCountByCategory(category);
-    
-    if (selectedCount === 0) return 'none';
-    if (selectedCount === categoryParams.length) return 'all';
-    return 'some';
-  };
-
-  // Get category color
-  const getCategoryColor = (category: string) => {
+  // Get color for the category
+  const getCategoryColor = (category: string): string => {
     return categoryColors[category] || "bg-gray-400";
   };
 
-  // Clear all selections
-  const clearAll = () => {
-    onParametersChange([]);
-  };
+  // Get selected parameter info
+  const selectedParameterInfo = singleParameter ? parameterInfo[singleParameter] : null;
 
   return (
     <div className="w-full relative">
+      <TooltipProvider>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-sm font-medium">Select Parameter</h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full">
+                <Info className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-sm">
+              <p>Select a parameter to sort colleges by.</p>
+              <p className="mt-1">Each parameter represents a specific measurement that affects the college's ranking.</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+      
       <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
@@ -139,21 +149,24 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
             aria-expanded={open}
             className="w-full justify-between h-auto py-3 text-left"
           >
-            <div className="flex flex-col items-start">
-              <span className="font-medium">Select Parameters</span>
-              <span className="text-xs text-muted-foreground">
-                {selectedParameters.length === 0 
-                  ? 'No parameters selected' 
-                  : `${selectedParameters.length} parameter${selectedParameters.length === 1 ? '' : 's'} selected`}
-              </span>
-            </div>
+            {singleParameter ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="font-mono text-xs">{singleParameter}</Badge>
+                <span className="font-medium">{selectedParameterInfo?.fullName || singleParameter}</span>
+                {selectedParameterInfo?.weight && (
+                  <Badge variant="secondary" className="text-xs">Weight: {selectedParameterInfo.weight}</Badge>
+                )}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">Select a parameter...</span>
+            )}
             <div className="flex items-center">
-              {selectedParameters.length > 0 && (
+              {singleParameter && (
                 <Button
                   variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    clearAll();
+                    clearSelection();
                   }}
                   className="mr-1 h-8 w-8 p-0"
                 >
@@ -164,41 +177,42 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="p-0" side="bottom" align="start" sideOffset={5} style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)' }}>
+        <PopoverContent className="p-0" side="bottom" align="start" sideOffset={5} style={{ width: 'calc(100vw - 40px)', maxWidth: '500px' }}>
           <Command className="w-full" style={{ width: '100%' }}>
+            <div className="p-3 pb-0">
+              <div className="text-sm mb-2">
+                <span className="font-semibold">Parameters</span> determine how colleges are ranked.
+              </div>
+            </div>
             <div className="flex items-center border-b px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <CommandInput
+              <input
+                className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Search parameters..."
                 value={searchValue}
-                onValueChange={setSearchValue}
-                className="flex-1 border-0 focus:ring-0"
+                onChange={(e) => setSearchValue(e.target.value)}
               />
             </div>
             
-            <div className="flex border-b">
-              <ScrollArea className="py-1" orientation="horizontal">
-                <div className="flex px-2 gap-1">
-                  <Badge
-                    variant={activeCategory === null ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setActiveCategory(null)}
-                  >
-                    All
-                  </Badge>
-                  {Object.keys(parametersByCategory).map(category => (
-                    <Badge
-                      key={category}
-                      variant={activeCategory === category ? "default" : "outline"}
-                      className="cursor-pointer whitespace-nowrap"
-                      onClick={() => setActiveCategory(activeCategory === category ? null : category)}
-                    >
-                      <div className={`mr-1.5 h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
-                      {category.split(' ')[0]} ({getSelectedCountByCategory(category)}/{parametersByCategory[category].length})
-                    </Badge>
-                  ))}
-                </div>
-              </ScrollArea>
+            <div className="flex gap-1 overflow-x-auto p-1 border-b">
+              <Badge 
+                variant={activeCategory === null ? "default" : "outline"}
+                className="cursor-pointer whitespace-nowrap"
+                onClick={() => setActiveCategory(null)}
+              >
+                All Categories
+              </Badge>
+              {Object.entries(parametersByCategory).map(([category]) => (
+                <Badge 
+                  key={category}
+                  variant={activeCategory === category ? "default" : "outline"}
+                  className="cursor-pointer whitespace-nowrap"
+                  onClick={() => setActiveCategory(activeCategory === category ? null : category)}
+                >
+                  <div className={`mr-1.5 h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
+                  {category.split(' ')[0]}
+                </Badge>
+              ))}
             </div>
             
             <CommandEmpty>No parameters found.</CommandEmpty>
@@ -212,44 +226,24 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
                   const visibleParams = params.filter(param => filteredParameters.includes(param));
                   if (visibleParams.length === 0) return null;
                   
-                  const categoryState = getCategorySelectionState(category);
-                  
                   return (
                     <div key={category}>
-                      <div 
-                        className="flex items-center px-3 py-2 hover:bg-muted/50 cursor-pointer"
-                        onClick={() => toggleCategory(category)}
-                      >
-                        <div className={cn(
-                          "h-4 w-4 mr-2 border rounded-sm flex items-center justify-center",
-                          categoryState === 'all'
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : categoryState === 'some'
-                              ? "bg-primary/30 border-primary/30"
-                              : "border-muted-foreground"
-                        )}>
-                          {categoryState === 'all' && <Check className="h-3 w-3" />}
-                        </div>
-                        
-                        <div className="flex items-center gap-2 flex-1">
+                      <div className="px-3 py-2 text-sm font-medium text-muted-foreground">
+                        <div className="flex items-center gap-2">
                           <div className={`h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
-                          <span className="font-medium">{category}</span>
+                          <span>{category}</span>
                         </div>
-                        
-                        <span className="text-xs text-muted-foreground">
-                          {getSelectedCountByCategory(category)}/{params.length}
-                        </span>
                       </div>
                       
                       <CommandGroup>
                         {visibleParams.map(param => {
                           const info = parameterInfo[param];
-                          const isSelected = selectedParameters.includes(param);
+                          const isSelected = param === singleParameter;
                           
                           return (
                             <CommandItem
                               key={param}
-                              onSelect={() => toggleParameter(param)}
+                              onSelect={() => selectParameter(param)}
                               className="px-6 py-2"
                             >
                               <div className={cn(
@@ -261,22 +255,20 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
                                 {isSelected && <Check className="h-3 w-3" />}
                               </div>
                               
-                              <div className="flex flex-col flex-1">
-                                <span className="font-medium">{info?.fullName || param}</span>
+                              <div className="flex flex-col flex-1 mr-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="font-mono text-xs">{param}</Badge>
+                                  <span className="font-medium">{info?.fullName || param}</span>
+                                  {info?.weight && (
+                                    <Badge variant="secondary" className="text-xs">Weight: {info.weight}</Badge>
+                                  )}
+                                </div>
                                 {info?.description && (
-                                  <span className="text-xs text-muted-foreground line-clamp-1">
+                                  <span className="text-xs text-muted-foreground mt-1">
                                     {info.description}
                                   </span>
                                 )}
                               </div>
-                              
-                              <ParameterInfoCard
-                                name={info?.fullName || param}
-                                code={param}
-                                description={info?.description || "No description available"}
-                                examples={info?.examples}
-                                importance={info?.importance}
-                              />
                             </CommandItem>
                           );
                         })}
@@ -287,30 +279,23 @@ export const AdvancedParameterDropdown: React.FC<AdvancedParameterDropdownProps>
                 })}
               </ScrollArea>
             </CommandList>
-            
-            <div className="flex items-center justify-between p-2 border-t">
-              <span className="text-sm text-muted-foreground">
-                {selectedParameters.length} selected
-              </span>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => clearAll()}
-                >
-                  Clear All
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={() => setOpen(false)}
-                >
-                  Apply
-                </Button>
-              </div>
-            </div>
           </Command>
         </PopoverContent>
       </Popover>
+      
+      {singleParameter && (
+        <div className="mt-2 p-3 bg-muted/20 rounded-md border text-sm">
+          <div className="flex items-center justify-between">
+            <div className="font-medium">{selectedParameterInfo?.fullName || singleParameter}</div>
+            {selectedParameterInfo?.weight && (
+              <Badge variant="secondary">Weight: {selectedParameterInfo.weight}</Badge>
+            )}
+          </div>
+          {selectedParameterInfo?.description && (
+            <p className="text-muted-foreground mt-1">{selectedParameterInfo.description}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }; 
