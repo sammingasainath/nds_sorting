@@ -1,12 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, CheckSquare } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown, SortAsc } from "lucide-react";
 import { NonDominatedSortingResult } from '@/types';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Types
 interface CollegeDetails {
@@ -113,12 +114,19 @@ interface FrontBoxProps {
     selectedCollegeIds: string[];
 }
 
+// Add sort options type
+type SortOption = 'nirf' | 'alphabetical' | 'parameter';
+
 const FrontBox: React.FC<FrontBoxProps> = ({
     frontNumber,
     colleges,
     onCollegeSelect,
     selectedCollegeIds,
 }) => {
+    // Add state for sorting
+    const [sortBy, setSortBy] = useState<SortOption>('nirf');
+    const [selectedParameter, setSelectedParameter] = useState<string>('');
+
     const handleCollegeSelect = (collegeId: string) => {
         const newSelection = selectedCollegeIds.includes(collegeId)
             ? selectedCollegeIds.filter(id => id !== collegeId)
@@ -128,7 +136,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
 
     const handleSelectAllInFront = () => {
         const frontCollegeIds = colleges.map(result => result.college['Unnamed: 0']);
-        const allFrontCollegesSelected = frontCollegeIds.every(id => selectedCollegeIds.includes(id));
+        const allFrontCollegesSelected = frontCollegeIds.every(id => selectedCollegeIds.includes(id)); 
 
         const newSelection = allFrontCollegesSelected
             ? selectedCollegeIds.filter(id => !frontCollegeIds.includes(id))
@@ -139,9 +147,41 @@ const FrontBox: React.FC<FrontBoxProps> = ({
 
     const isSelected = (collegeId: string) => selectedCollegeIds.includes(collegeId);
 
+    // Get all parameters from the first college to use for parameter sorting
+    const availableParameters = colleges.length > 0 ? Object.keys(colleges[0].college).filter(key => 
+        key !== 'Unnamed: 0' && 
+        key !== 'Name' && 
+        key !== 'NIRF 2022 Rank' && 
+        !key.startsWith('_')
+    ) : [];
+
+    // Sort colleges based on selected sort option
+    const sortedColleges = [...colleges].sort((a, b) => {
+        switch (sortBy) {
+            case 'nirf':
+                const rankA = parseInt(a.college['NIRF 2022 Rank'] as string) || 1000;
+                const rankB = parseInt(b.college['NIRF 2022 Rank'] as string) || 1000;
+                return rankA - rankB;
+            
+            case 'alphabetical':
+                return (a.college.Name as string).localeCompare(b.college.Name as string);
+            
+            case 'parameter':
+                if (selectedParameter) {
+                    const valueA = parseFloat(a.college[selectedParameter] as string) || 0;
+                    const valueB = parseFloat(b.college[selectedParameter] as string) || 0;
+                    return valueB - valueA; // Higher values first
+                }
+                return 0;
+            
+            default:
+                return 0;
+        }
+    });
+
     return (
         <div className="min-w-[300px] border rounded-lg p-4 bg-card">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold">
                     Optimal Group {frontNumber}
                 </h3>
@@ -158,8 +198,50 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                     </Button>
                 </div>
             </div>
+            
+            {/* Add sorting controls */}
+            <div className="flex items-center gap-2 mb-3 mt-1">
+                <Select
+                    value={sortBy}
+                    onValueChange={(value) => setSortBy(value as SortOption)}
+                >
+                    <SelectTrigger className="h-8 text-xs">
+                        <div className="flex items-center gap-1">
+                            {sortBy === 'nirf' && <SortAsc className="h-3 w-3" />}
+                            {sortBy === 'alphabetical' && <ArrowUpDown className="h-3 w-3" />}
+                            {sortBy === 'parameter' && <ArrowDown className="h-3 w-3" />}
+                            <SelectValue placeholder="Sort by" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="nirf">NIRF Rank</SelectItem>
+                        <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                        <SelectItem value="parameter">Parameter</SelectItem>
+                    </SelectContent>
+                </Select>
+                
+                {sortBy === 'parameter' && (
+                    <Select
+                        value={selectedParameter}
+                        onValueChange={setSelectedParameter}
+                        disabled={availableParameters.length === 0}
+                    >
+                        <SelectTrigger className="h-8 text-xs flex-1">
+                            <SelectValue placeholder="Select parameter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableParameters.map(param => (
+                                <SelectItem key={param} value={param}>
+                                    {param}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            </div>
+
             <div className="space-y-2">
-                {colleges.map((result) => (
+                {sortedColleges.map((result) => (
                     <div
                         key={result.college['Unnamed: 0']}
                         className={cn(
@@ -176,9 +258,23 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                     <Checkbox
                                         checked={isSelected(result.college['Unnamed: 0'])}
                                         onCheckedChange={() => handleCollegeSelect(result.college['Unnamed: 0'])}
-                                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                                        onClick={(e) => e.stopPropagation()}
                                     />
-                                    <span className="font-medium">{result.college.Name}</span>
+                                    <div className="font-medium text-sm">
+                                        {result.college.Name as string}
+                                    </div>
+                                </div>
+                                <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2 ml-6">
+                                    <span>
+                                        NIRF: {result.college['NIRF 2022 Rank'] || 'N/A'}
+                                    </span>
+                                    
+                                    {/* Show the parameter value when sorting by parameter */}
+                                    {sortBy === 'parameter' && selectedParameter && (
+                                        <span className="font-medium text-primary">
+                                            {selectedParameter}: {result.college[selectedParameter] || 'N/A'}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
