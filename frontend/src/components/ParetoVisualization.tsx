@@ -301,8 +301,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         if (topN > 0 && topN < sorted.length) {
             // We need to sort first to know which are the top N
             let topSorted = [...sorted].sort((a, b) => {
-                const rankA = parseInt(a.college['NIRF 2022 Rank'] as string) || 9999;
-                const rankB = parseInt(b.college['NIRF 2022 Rank'] as string) || 9999;
+                // Use the index position in the original data as the rank
+                const rankA = colleges.findIndex(c => c.college['Unnamed: 0'] === a.college['Unnamed: 0']) + 1;
+                const rankB = colleges.findIndex(c => c.college['Unnamed: 0'] === b.college['Unnamed: 0']) + 1;
                 return rankA - rankB;
             });
             
@@ -317,8 +318,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
         return sorted.sort((a, b) => {
             switch (sortBy) {
                 case 'nirf':
-                    const rankA = parseInt(a.college['NIRF 2022 Rank'] as string) || 9999;
-                    const rankB = parseInt(b.college['NIRF 2022 Rank'] as string) || 9999;
+                    // Use the index position in the original data as the rank
+                    const rankA = colleges.findIndex(c => c.college['Unnamed: 0'] === a.college['Unnamed: 0']) + 1;
+                    const rankB = colleges.findIndex(c => c.college['Unnamed: 0'] === b.college['Unnamed: 0']) + 1;
                     return rankA - rankB;
                 
                 case 'alphabetical':
@@ -439,7 +441,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                         
                                                         {/* NIRF Rank badge */}
                                                         <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">
-                                                            NIRF: {result.college['NIRF 2022 Rank'] || 'N/A'}
+                                                            NIRF: {colleges.findIndex(c => c.college['Unnamed: 0'] === result.college['Unnamed: 0']) + 1}
                                                         </span>
                                                         
                                                         {/* Parameter value when sorting by parameter */}
