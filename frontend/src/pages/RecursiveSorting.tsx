@@ -3,7 +3,7 @@ import { useCollegeData } from '@/hooks/useCollegeData';
 import { SelectionControls } from '@/components/SelectionControls';
 import { ParetoVisualization } from '@/components/ParetoVisualization';
 import { Button } from '@/components/ui/button';
-import { Play, Settings, Sparkles, MessageSquare, RotateCcw } from 'lucide-react';
+import { Play, Settings, Sparkles, MessageSquare, RotateCcw, InfoCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,13 @@ import { parameterInfo } from '@/lib/parameterInfo';
 import { AdvancedParameterDropdown } from '@/components/AdvancedParameterDropdown';
 import { ImprovedParameterSuggestion } from '@/components/ImprovedParameterSuggestion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ParameterCodeList } from '@/components/ParameterCodeList';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const RecursiveSorting: React.FC = () => {
     const {
@@ -601,6 +608,10 @@ export const RecursiveSorting: React.FC = () => {
                         </Card>
                     </TabsContent>
                 </Tabs>
+
+                <div className="fixed right-4 top-[180px] hidden lg:block">
+                    <ParameterCodeList parameters={parameters} />
+                </div>
             </div>
         </Layout>
     );
