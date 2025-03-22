@@ -7,8 +7,10 @@ import { useComparison } from '@/contexts/ComparisonContext';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ParameterSelector } from '@/components/ParameterSelector';
 import { parameterInfo } from '@/lib/parameterInfo';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Filter, SortAsc } from "lucide-react";
 
 export const ComparisonPage: React.FC = () => {
   const {
@@ -148,6 +150,21 @@ export const ComparisonPage: React.FC = () => {
   // Force a complete remount of SelectionControls when iteration changes
   const selectionControlsKey = `selection-controls-${currentIterationId}-${forceUpdate}`;
 
+  // Handle search query and sort options
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('nirf');
+
+  // Handle select all colleges
+  const handleSelectAll = useCallback(() => {
+    if (selectedColleges.length === colleges.length) {
+      // If all are selected, deselect all
+      setSelectedColleges([]);
+    } else {
+      // Select all available colleges
+      setSelectedColleges(colleges.map(college => college.Name));
+    }
+  }, [colleges, selectedColleges, setSelectedColleges]);
+
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex justify-between items-center">
@@ -159,61 +176,89 @@ export const ComparisonPage: React.FC = () => {
               ({availableColleges.length} colleges available)
             </div>
           )}
-          {selectedColleges.length > 0 && (
-            <Button 
-              onClick={handleNewIteration}
-              variant="outline"
-            >
-              Start New Iteration
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Two-column layout for college and parameter selection */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* College selection - takes 2/3 of the space */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Colleges</CardTitle>
-              <CardDescription>Choose the colleges you want to compare</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SelectionControls
-                colleges={colleges}
-                parameters={parameters}
-                selectedColleges={selectedColleges}
-                selectedParameters={selectedParameters}
-                onCollegesChange={setSelectedColleges}
-                onParametersChange={setSelectedParameters}
-                isLoading={loading}
-                iterationId={currentIterationId}
-                isSubsequentIteration={isSubsequentIteration}
-                key={selectionControlsKey}
-              />
-            </CardContent>
-          </Card>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Select Colleges</CardTitle>
+          <CardDescription>Choose the colleges you want to compare</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Top controls for search, sort, filter */}
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Input
+                  className="w-full pl-8"
+                  placeholder="Search colleges..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Select
+                value={sortBy}
+                onValueChange={(value) => setSortBy(value)}
+              >
+                <SelectTrigger className="w-[160px]">
+                  <div className="flex items-center gap-2">
+                    <SortAsc className="h-4 w-4" />
+                    <SelectValue placeholder="Sort by" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                  <SelectItem value="nirf">NIRF Rank</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Parameter selection dropdown */}
+              <Select
+                value={selectedParameters.length > 0 ? selectedParameters[0] : ""}
+                onValueChange={(value) => {
+                  setSelectedParameters([value]);
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select parameter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {parameters.map(param => (
+                    <SelectItem key={param} value={param}>
+                      {parameterInfo[param]?.fullName || param}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        {/* Parameter selection - takes 1/3 of the space */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Parameters</CardTitle>
-              <CardDescription>Choose the parameters for comparison</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ParameterSelector
-                parameters={parameters}
-                selectedParameters={selectedParameters}
-                parameterInfo={parameterInfo}
-                onParametersChange={setSelectedParameters}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              <Button
+                variant="outline"
+                onClick={handleSelectAll}
+              >
+                {selectedColleges.length === colleges.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+          </div>
+
+          <SelectionControls
+            colleges={colleges}
+            parameters={parameters}
+            selectedColleges={selectedColleges}
+            selectedParameters={selectedParameters}
+            onCollegesChange={setSelectedColleges}
+            onParametersChange={setSelectedParameters}
+            isLoading={loading}
+            iterationId={currentIterationId}
+            isSubsequentIteration={isSubsequentIteration}
+            key={selectionControlsKey}
+            searchQuery={searchQuery}
+            sortBy={sortBy}
+          />
+        </CardContent>
+      </Card>
       
       {selectedColleges.length > 0 && selectedParameters.length > 0 && (
         <CollegeComparison
