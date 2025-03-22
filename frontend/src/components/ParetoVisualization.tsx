@@ -396,14 +396,22 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                             <Button 
                                 variant={showOutliers ? "default" : "outline"} 
                                 size="sm" 
-                                className="h-8 text-xs"
+                                className={cn(
+                                    "h-8 text-xs",
+                                    showOutliers && outliers.length > 0 && "bg-yellow-500 hover:bg-yellow-600 text-black"
+                                )}
                                 onClick={() => setShowOutliers(!showOutliers)}
                             >
-                                Outliers
+                                {showOutliers ? `Outliers (${outliers.length})` : 'Outliers'}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Show colleges with unusually low parameter values</p>
+                        <TooltipContent className="max-w-[300px] p-3">
+                            <p className="text-sm">Shows colleges with unusually low parameter values (1.5 standard deviations below group average)</p>
+                            {outliers.length > 0 && showOutliers && (
+                                <div className="mt-1 pt-1 border-t">
+                                    <p className="text-xs text-muted-foreground">This group has {outliers.length} outlier indicators across {new Set(outliers.map(o => o.collegeId)).size} colleges</p>
+                                </div>
+                            )}
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -459,7 +467,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                 isSelected(collegeId)
                                     ? "bg-primary/10 border-primary/30"
                                     : "bg-background hover:bg-accent/5 border-border",
-                                collegeOutliers.length > 0 && showOutliers ? "border-yellow-500" : ""
+                                collegeOutliers.length > 0 && showOutliers 
+                                    ? "border-yellow-500 bg-yellow-500/5 shadow-sm" 
+                                    : ""
                             )}
                             onClick={() => handleCollegeSelect(collegeId)}
                         >
@@ -478,6 +488,9 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                 </span>
                                             )}
                                             {result.college.Name as string}
+                                            {collegeOutliers.length > 0 && showOutliers && (
+                                                <span className="ml-2 inline-block w-2 h-2 rounded-full bg-yellow-500" title="Has outliers"></span>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-2 ml-6">
@@ -504,20 +517,24 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <span className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full">
-                                                            Outlier
+                                                        <span className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                            <span>Outlier:</span>
+                                                            <span className="font-medium">{collegeOutliers.map(o => o.parameter.split(' ')[0]).join(', ')}</span>
                                                         </span>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>
+                                                    <TooltipContent className="max-w-[300px]">
                                                         <div className="text-xs space-y-1">
                                                             <p className="font-semibold">Low values in:</p>
                                                             {collegeOutliers.map((o, i) => (
-                                                                <p key={i}>
-                                                                    {o.parameter}: {o.value.toFixed(2)} 
-                                                                    <span className="text-muted-foreground ml-1">
-                                                                        (threshold: {o.threshold.toFixed(2)})
-                                                                    </span>
-                                                                </p>
+                                                                <div key={i} className="flex justify-between items-center gap-2 border-b border-muted pb-1 last:border-0">
+                                                                    <span className="font-medium">{o.parameter}:</span> 
+                                                                    <div>
+                                                                        <span className="text-yellow-500">{o.value.toFixed(2)}</span>
+                                                                        <span className="text-muted-foreground ml-1">
+                                                                            (below: {o.threshold.toFixed(2)})
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             ))}
                                                         </div>
                                                     </TooltipContent>
