@@ -47,6 +47,31 @@ interface OutlierInfo {
     percentageBelowMean: number;
 }
 
+// Add context for global settings
+interface GlobalSettingsContextType {
+  globalSortBy: SortOption;
+  setGlobalSortBy: (option: SortOption) => void;
+  globalSelectedParameter: string;
+  setGlobalSelectedParameter: (param: string) => void;
+  globalShowOutliers: boolean;
+  setGlobalShowOutliers: (show: boolean) => void;
+  globalTopN: number;
+  setGlobalTopN: (n: number) => void;
+  globalSelectedParameters: string[];
+  setGlobalSelectedParameters: (params: string[]) => void;
+}
+
+const GlobalSettingsContext = React.createContext<GlobalSettingsContextType | undefined>(undefined);
+
+// Hook to use settings context
+const useGlobalSettings = () => {
+  const context = React.useContext(GlobalSettingsContext);
+  if (context === undefined) {
+    throw new Error('useGlobalSettings must be used within a GlobalSettingsProvider');
+  }
+  return context;
+};
+
 // Helper function to get parameter information with fallback
 const getParameterInfo = (paramCode: string) => {
     // Try to get the parameter info
@@ -195,12 +220,16 @@ const FrontBox: React.FC<FrontBoxProps> = ({
     onCollegeSelect,
     selectedCollegeIds,
 }) => {
-    // State variables
-    const [sortBy, setSortBy] = useState<SortOption>('nirf');
-    const [selectedParameter, setSelectedParameter] = useState<string>('');
-    const [showOutliers, setShowOutliers] = useState<boolean>(true);
-    const [topN, setTopN] = useState<number>(0); // 0 means show all
-    const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
+    // Get global settings instead of local state
+    const {
+      globalSortBy: sortBy,
+      globalSelectedParameter: selectedParameter,
+      globalShowOutliers: showOutliers,
+      globalTopN: topN,
+      globalSelectedParameters: selectedParameters,
+    } = useGlobalSettings();
+
+    // Only keep local state for dialog
     const [parametersDialogOpen, setParametersDialogOpen] = useState<boolean>(false);
     
     // Get available parameters
@@ -266,7 +295,26 @@ const FrontBox: React.FC<FrontBoxProps> = ({
 
     // Sort colleges
     const sortedColleges = useMemo(() => {
-        let sorted = [...colleges].sort((a, b) => {
+        let sorted = [...colleges];
+        
+        // Apply topN filter first if set
+        if (topN > 0 && topN < sorted.length) {
+            // We need to sort first to know which are the top N
+            let topSorted = [...sorted].sort((a, b) => {
+                const rankA = parseInt(a.college['NIRF 2022 Rank'] as string) || 9999;
+                const rankB = parseInt(b.college['NIRF 2022 Rank'] as string) || 9999;
+                return rankA - rankB;
+            });
+            
+            // Get the IDs of the top N colleges
+            const topNIds = topSorted.slice(0, topN).map(c => c.college['Unnamed: 0'] as string);
+            
+            // Filter the original list to only include these IDs
+            sorted = sorted.filter(c => topNIds.includes(c.college['Unnamed: 0'] as string));
+        }
+        
+        // Then sort by the selected criteria
+        return sorted.sort((a, b) => {
             switch (sortBy) {
                 case 'nirf':
                     const rankA = parseInt(a.college['NIRF 2022 Rank'] as string) || 9999;
@@ -285,7 +333,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                     return 0;
                 
                 case 'balanced':
-                    // Calculate average normalized score across all available parameters
+                    // Calculate average normalized score across selected parameters
                     const paramsToConsider = selectedParameters.length > 0 
                         ? selectedParameters.filter(p => 
                             // Filter out non-numeric parameters
@@ -327,200 +375,20 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                     return 0;
             }
         });
-
-        // Apply top-N filter if set
-        if (topN > 0 && topN < sorted.length) {
-            sorted = sorted.slice(0, topN);
-        }
-        
-        return sorted;
-    }, [colleges, sortBy, selectedParameter, selectedParameters, topN]);
+    }, [colleges, sortBy, selectedParameter, topN, selectedParameters, availableParameters]);
 
     return (
-        <div className={cn("mb-6 relative", frontNumber > 0 && "mt-8")}>
-            <div className="mb-3 space-y-3">
-                {/* Header with title and Select All */}
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Optimal Group {frontNumber}</h3>
-                    <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleSelectAll()}>
-                        Select All
-                    </Button>
-                </div>
-                
-                {/* Controls area with visual separation */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    {/* Sorting controls */}
-                    <div className="flex items-center gap-2 border-r pr-3 dark:border-gray-700">
-                        <label className="text-xs text-muted-foreground whitespace-nowrap">Sort:</label>
-                        <Select
-                            value={sortBy}
-                            onValueChange={(value) => {
-                                setSortBy(value as SortOption);
-                                
-                                // When switching to balanced sort, open parameters dialog
-                                if (value === 'balanced' && selectedParameters.length === 0) {
-                                    setParametersDialogOpen(true);
-                                }
-                            }}
-                        >
-                            <SelectTrigger className="h-8 text-xs min-w-[130px]">
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="nirf">NIRF Rank</SelectItem>
-                                <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                                <SelectItem value="parameter">Parameter</SelectItem>
-                                <SelectItem value="balanced">Equal Weightage</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        
-                        {sortBy === 'parameter' && (
-                            <Select
-                                value={selectedParameter}
-                                onValueChange={setSelectedParameter}
-                            >
-                                <SelectTrigger className="h-8 text-xs w-[180px]">
-                                    <SelectValue placeholder="Select parameter" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableParameters.map(param => (
-                                        <SelectItem key={param} value={param}>
-                                            {parameterInfo[param]?.fullName || param}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                        
-                        {sortBy === 'balanced' && (
-                            <Dialog open={parametersDialogOpen} onOpenChange={setParametersDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                                        <Settings className="h-4 w-4" />
-                                        <span className="sr-only">Configure parameters</span>
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[425px]">
-                                    <DialogHeader>
-                                        <DialogTitle>Select Parameters for Equal Weightage</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="py-4 max-h-[50vh] overflow-y-auto">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <p className="text-sm text-muted-foreground">
-                                                Select the parameters to include in equal weightage calculation
-                                            </p>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => setSelectedParameters(
-                                                    selectedParameters.length === availableParameters.length 
-                                                        ? [] 
-                                                        : [...availableParameters]
-                                                )}
-                                            >
-                                                {selectedParameters.length === availableParameters.length ? 'Deselect All' : 'Select All'}
-                                            </Button>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {availableParameters.map(param => {
-                                                const paramInfo = parameterInfo[param] || { fullName: param };
-                                                return (
-                                                    <div key={param} className="flex items-start">
-                                                        <Checkbox 
-                                                            id={`param-${param}`}
-                                                            checked={selectedParameters.includes(param)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (checked) {
-                                                                    setSelectedParameters([...selectedParameters, param]);
-                                                                } else {
-                                                                    setSelectedParameters(selectedParameters.filter(p => p !== param));
-                                                                }
-                                                            }}
-                                                            className="mt-1"
-                                                        />
-                                                        <div className="ml-2">
-                                                            <label 
-                                                                htmlFor={`param-${param}`} 
-                                                                className="text-sm font-medium leading-none cursor-pointer"
-                                                            >
-                                                                {paramInfo.fullName || param}
-                                                            </label>
-                                                            {paramInfo.category && (
-                                                                <p className="text-xs text-muted-foreground mt-1">
-                                                                    {paramInfo.category}
-                                                                    {paramInfo.weight && ` • Weight: ${paramInfo.weight}%`}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <DialogClose asChild>
-                                            <Button type="submit">Apply</Button>
-                                        </DialogClose>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        )}
-                    </div>
-                    
-                    {/* Filtering controls */}
-                    <div className="flex items-center gap-2 border-r pr-3 dark:border-gray-700">
-                        <label className="text-xs text-muted-foreground whitespace-nowrap">Filter:</label>
-                        <div className="flex items-center gap-1.5">
-                            <Label htmlFor={`topn-${frontNumber}`} className="text-xs whitespace-nowrap">Top</Label>
-                            <Input 
-                                id={`topn-${frontNumber}`}
-                                type="number" 
-                                min="0" 
-                                max={colleges.length}
-                                value={topN || ''} 
-                                onChange={e => setTopN(parseInt(e.target.value) || 0)}
-                                className="h-8 w-16 text-xs" 
-                                placeholder="All"
-                            />
-                        </div>
-                    </div>
-                    
-                    {/* Outlier toggle */}
-                    <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground">Highlight:</label>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button 
-                                        variant={showOutliers ? "default" : "outline"} 
-                                        size="sm" 
-                                        className={cn(
-                                            "h-8 text-xs",
-                                            showOutliers && outliers.length > 0 && "bg-yellow-500 hover:bg-yellow-600 text-black"
-                                        )}
-                                        onClick={() => setShowOutliers(!showOutliers)}
-                                    >
-                                        {showOutliers ? `Outliers (${outliers.length})` : 'Outliers'}
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent 
-                                    className="max-w-[300px] p-3"
-                                    side="bottom"
-                                    align="center"
-                                    sideOffset={5}
-                                    avoidCollisions={true}
-                                >
-                                    <p className="text-sm">Shows colleges with unusually low parameter values (1.5 standard deviations below group average)</p>
-                                    {outliers.length > 0 && showOutliers && (
-                                        <div className="mt-1 pt-1 border-t">
-                                            <p className="text-xs text-muted-foreground">This group has {outliers.length} outlier indicators across {new Set(outliers.map(o => o.collegeId)).size} colleges</p>
-                                        </div>
-                                    )}
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                </div>
+        <div className="min-w-[320px] flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+                <h3 className="text-base font-medium">Optimal Group {frontNumber}</h3>
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleSelectAll}
+                    className="text-xs h-7 px-2.5"
+                >
+                    Select All
+                </Button>
             </div>
             
             <div className="border rounded-lg dark:border-gray-800 overflow-hidden">
@@ -777,6 +645,195 @@ const FrontBox: React.FC<FrontBoxProps> = ({
     );
 };
 
+// Add Global Controls Component
+const GlobalControls: React.FC<{ availableParameters: string[] }> = ({ availableParameters }) => {
+    const {
+        globalSortBy,
+        setGlobalSortBy,
+        globalSelectedParameter,
+        setGlobalSelectedParameter,
+        globalShowOutliers,
+        setGlobalShowOutliers,
+        globalTopN,
+        setGlobalTopN,
+        globalSelectedParameters,
+        setGlobalSelectedParameters
+    } = useGlobalSettings();
+
+    const [parametersDialogOpen, setParametersDialogOpen] = useState<boolean>(false);
+
+    return (
+        <div className="flex flex-wrap gap-3 mb-4 p-3 border rounded-lg bg-muted/30">
+            {/* Sorting controls */}
+            <div className="flex items-center gap-3 border-r pr-3 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">Sort:</label>
+                    <Select
+                        value={globalSortBy}
+                        onValueChange={(value: SortOption) => setGlobalSortBy(value)}
+                    >
+                        <SelectTrigger className="h-8 w-[140px] text-xs">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="nirf">NIRF Rank</SelectItem>
+                            <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                            <SelectItem value="parameter">By Parameter</SelectItem>
+                            <SelectItem value="balanced">Equal Weightage</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                
+                {globalSortBy === 'parameter' && (
+                    <div className="flex items-center gap-2">
+                        <Select
+                            value={globalSelectedParameter}
+                            onValueChange={setGlobalSelectedParameter}
+                        >
+                            <SelectTrigger className="h-8 w-[140px] text-xs">
+                                <SelectValue placeholder="Select parameter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableParameters.map(param => {
+                                    const paramInfo = parameterInfo[param] || { fullName: param };
+                                    return (
+                                        <SelectItem key={param} value={param}>
+                                            {paramInfo.fullName || param}
+                                        </SelectItem>
+                                    );
+                                })}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                
+                {globalSortBy === 'balanced' && (
+                    <Dialog open={parametersDialogOpen} onOpenChange={setParametersDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1.5">
+                                <Settings className="h-3.5 w-3.5" />
+                                Configure
+                                <span className="sr-only">Configure parameters</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Select Parameters for Equal Weightage</DialogTitle>
+                            </DialogHeader>
+                            <div className="py-4 max-h-[50vh] overflow-y-auto">
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-sm text-muted-foreground">
+                                        Select the parameters to include in equal weightage calculation
+                                    </p>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setGlobalSelectedParameters(
+                                            globalSelectedParameters.length === availableParameters.length 
+                                                ? [] 
+                                                : [...availableParameters]
+                                        )}
+                                    >
+                                        {globalSelectedParameters.length === availableParameters.length ? 'Deselect All' : 'Select All'}
+                                    </Button>
+                                </div>
+                                <div className="space-y-3">
+                                    {availableParameters.map(param => {
+                                        const paramInfo = parameterInfo[param] || { fullName: param };
+                                        return (
+                                            <div key={param} className="flex items-start">
+                                                <Checkbox 
+                                                    id={`global-param-${param}`}
+                                                    checked={globalSelectedParameters.includes(param)}
+                                                    onCheckedChange={(checked) => {
+                                                        if (checked) {
+                                                            setGlobalSelectedParameters([...globalSelectedParameters, param]);
+                                                        } else {
+                                                            setGlobalSelectedParameters(globalSelectedParameters.filter(p => p !== param));
+                                                        }
+                                                    }}
+                                                    className="mt-1"
+                                                />
+                                                <div className="ml-2">
+                                                    <label 
+                                                        htmlFor={`global-param-${param}`} 
+                                                        className="text-sm font-medium leading-none cursor-pointer"
+                                                    >
+                                                        {paramInfo.fullName || param}
+                                                    </label>
+                                                    {paramInfo.category && (
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {paramInfo.category}
+                                                            {paramInfo.weight && ` • Weight: ${paramInfo.weight}%`}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="submit">Apply</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                )}
+            </div>
+            
+            {/* Filtering controls */}
+            <div className="flex items-center gap-2 border-r pr-3 dark:border-gray-700">
+                <label className="text-xs text-muted-foreground whitespace-nowrap">Filter:</label>
+                <div className="flex items-center gap-1.5">
+                    <Label htmlFor="global-topn" className="text-xs whitespace-nowrap">Top</Label>
+                    <Input 
+                        id="global-topn"
+                        type="number" 
+                        min="0" 
+                        value={globalTopN || ''} 
+                        onChange={e => setGlobalTopN(parseInt(e.target.value) || 0)}
+                        className="h-8 w-16 text-xs" 
+                        placeholder="All"
+                    />
+                </div>
+            </div>
+            
+            {/* Outlier toggle */}
+            <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground">Highlight:</label>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                variant={globalShowOutliers ? "default" : "outline"} 
+                                size="sm" 
+                                className={cn(
+                                    "h-8 text-xs",
+                                    globalShowOutliers && "bg-yellow-500 hover:bg-yellow-600 text-black"
+                                )}
+                                onClick={() => setGlobalShowOutliers(!globalShowOutliers)}
+                            >
+                                {globalShowOutliers ? 'Outliers' : 'Outliers'}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                            className="max-w-[300px] p-3"
+                            side="bottom"
+                            align="center"
+                            sideOffset={5}
+                            avoidCollisions={true}
+                        >
+                            <p className="text-sm">Shows colleges with unusually low parameter values (1.5 standard deviations below group average)</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </div>
+        </div>
+    );
+};
+
 // Main Component
 export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
     data,
@@ -786,6 +843,31 @@ export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = React.useState(false);
     const [canScrollRight, setCanScrollRight] = React.useState(false);
+
+    // Global state
+    const [globalSortBy, setGlobalSortBy] = useState<SortOption>('nirf');
+    const [globalSelectedParameter, setGlobalSelectedParameter] = useState<string>('');
+    const [globalShowOutliers, setGlobalShowOutliers] = useState<boolean>(true);
+    const [globalTopN, setGlobalTopN] = useState<number>(0);
+    const [globalSelectedParameters, setGlobalSelectedParameters] = useState<string[]>([]);
+
+    // Get all available parameters across all colleges
+    const allAvailableParameters = React.useMemo(() => {
+        const allParams = new Set<string>();
+        data.forEach(result => {
+            Object.keys(result.college).forEach(key => {
+                if (
+                    key !== 'Name' && 
+                    key !== 'Unnamed: 0' && 
+                    key !== 'NIRF 2022 Rank' &&
+                    !key.includes('Rank')
+                ) {
+                    allParams.add(key);
+                }
+            });
+        });
+        return Array.from(allParams);
+    }, [data]);
 
     // Define updateScrollButtons first
     const updateScrollButtons = React.useCallback(() => {
@@ -886,43 +968,57 @@ export const ParetoVisualization: React.FC<ParetoVisualizationProps> = ({
     }
 
     return (
-        <Card className="h-full">
-            <CardHeader className="pb-2">
-                <CardTitle>Optimal Groups</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[200px] text-center">
-                        <p className="text-muted-foreground">
-                            No sorting results available. Select colleges and parameters, then run the sorting algorithm.
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        <ScrollControls
-                            onScroll={handleScroll}
-                            canScrollLeft={canScrollLeft}
-                            canScrollRight={canScrollRight}
-                        />
-                        <div ref={scrollAreaRef}>
-                            <ScrollArea className="w-full">
-                                <div className="flex gap-4 pb-4">
-                                    {frontGroups.map((group) => (
-                                        <FrontBox
-                                            key={group.front}
-                                            frontNumber={group.front}
-                                            colleges={data.filter(item => item.frontNumber === group.front)}
-                                            onCollegeSelect={onSelectionChange}
-                                            selectedCollegeIds={selectedIds}
-                                        />
-                                    ))}
-                                </div>
-                                <ScrollBar orientation="horizontal" />
-                            </ScrollArea>
+        <GlobalSettingsContext.Provider value={{
+            globalSortBy,
+            setGlobalSortBy,
+            globalSelectedParameter,
+            setGlobalSelectedParameter,
+            globalShowOutliers,
+            setGlobalShowOutliers, 
+            globalTopN,
+            setGlobalTopN,
+            globalSelectedParameters,
+            setGlobalSelectedParameters
+        }}>
+            <Card className="h-full">
+                <CardHeader className="pb-2">
+                    <CardTitle>Optimal Groups</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {data.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-[200px] text-center">
+                            <p className="text-muted-foreground">
+                                No sorting results available. Select colleges and parameters, then run the sorting algorithm.
+                            </p>
                         </div>
-                    </>
-                )}
-            </CardContent>
-        </Card>
+                    ) : (
+                        <>
+                            <GlobalControls availableParameters={allAvailableParameters} />
+                            <ScrollControls
+                                onScroll={handleScroll}
+                                canScrollLeft={canScrollLeft}
+                                canScrollRight={canScrollRight}
+                            />
+                            <div ref={scrollAreaRef}>
+                                <ScrollArea className="w-full">
+                                    <div className="flex gap-4 pb-4">
+                                        {frontGroups.map((group) => (
+                                            <FrontBox
+                                                key={group.front}
+                                                frontNumber={group.front}
+                                                colleges={data.filter(item => item.frontNumber === group.front)}
+                                                onCollegeSelect={onSelectionChange}
+                                                selectedCollegeIds={selectedIds}
+                                            />
+                                        ))}
+                                    </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            </div>
+                        </>
+                    )}
+                </CardContent>
+            </Card>
+        </GlobalSettingsContext.Provider>
     );
 }; 
