@@ -3,7 +3,7 @@ import { useCollegeData } from '@/hooks/useCollegeData';
 import { SelectionControls } from '@/components/SelectionControls';
 import { ParetoVisualization } from '@/components/ParetoVisualization';
 import { Button } from '@/components/ui/button';
-import { Play, Settings, Sparkles, MessageSquare, RotateCcw, InfoCircle, Info } from 'lucide-react';
+import { Play, Settings, Sparkles, MessageSquare, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -608,10 +608,6 @@ export const RecursiveSorting: React.FC = () => {
                         </Card>
                     </TabsContent>
                 </Tabs>
-
-                <div className="fixed right-4 top-[180px] hidden lg:block">
-                    <ParameterCodeList parameters={parameters} />
-                </div>
             </div>
         </Layout>
     );
