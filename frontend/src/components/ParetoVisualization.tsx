@@ -327,13 +327,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                 {showOutliers ? `Outliers (${outliers.length})` : 'Outliers'}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent 
-                            className="max-w-[300px] p-3"
-                            side="bottom"
-                            align="center"
-                            sideOffset={5}
-                            avoidCollisions={true}
-                        >
+                        <TooltipContent className="max-w-[300px] p-3">
                             <p className="text-sm">Shows colleges with unusually low parameter values (1.5 standard deviations below group average)</p>
                             {outliers.length > 0 && showOutliers && (
                                 <div className="mt-1 pt-1 border-t">
@@ -349,6 +343,11 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                 {sortedColleges.map((result, index) => {
                     const collegeId = result.college['Unnamed: 0'] as string;
                     const collegeOutliers = getCollegeOutliers(collegeId);
+                    
+                    // Calculate tooltip position - use top for colleges in bottom half of list
+                    const isBottomHalf = index >= sortedColleges.length / 2;
+                    const tooltipSide = isBottomHalf ? "top" : "right";
+                    const tooltipAlign = isBottomHalf ? "center" : "start";
                     
                     return (
                         <div
@@ -408,12 +407,15 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                         </span>
                                                     </TooltipTrigger>
                                                     <TooltipContent 
-                                                        className="max-w-[400px] p-4" 
-                                                        side="right" 
-                                                        align="start"
-                                                        sideOffset={5}
-                                                        alignOffset={-10}
+                                                        className="max-w-[400px] p-4 z-50" 
+                                                        side={tooltipSide}
+                                                        align={tooltipAlign}
+                                                        sideOffset={10}
                                                         avoidCollisions={true}
+                                                        collisionBoundary={document.body}
+                                                        collisionPadding={20}
+                                                        sticky="always"
+                                                        hideWhenDetached={false}
                                                     >
                                                         <div className="text-sm space-y-4">
                                                             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
