@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { College } from '@/types';
-import { Check, ArrowUpRight } from "lucide-react";
+import { Check, ArrowUpRight, SortAsc, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -23,6 +23,13 @@ import {
   DialogDescription,
   DialogHeader,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SelectionControlsProps {
   colleges: College[];
@@ -55,40 +62,21 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   const filteredColleges = useMemo(() => {
     let result = [...colleges];
 
-    // Apply search filter
     if (collegeOptions.searchQuery) {
       const search = collegeOptions.searchQuery.toLowerCase();
-      result = result.filter(college =>
-        college.Name.toLowerCase().includes(search) || 
-        college['Unnamed: 0'].toString().toLowerCase().includes(search)
+      result = result.filter(college => 
+        college.Name.toLowerCase().includes(search)
       );
     }
 
-    // Apply selected/unselected filter
     if (collegeOptions.filterBy === 'selected') {
       result = result.filter(college => selectedColleges.includes(college.Name));
     } else if (collegeOptions.filterBy === 'unselected') {
       result = result.filter(college => !selectedColleges.includes(college.Name));
     }
 
-    // Apply sorting
     if (collegeOptions.sortBy === 'alphabetical') {
       result.sort((a, b) => a.Name.localeCompare(b.Name));
-    } else if (collegeOptions.sortBy === 'nirf') {
-      // NIRF sorting is based on the original order in the 'colleges' array
-      // Ensure we're sorting back to the original order
-      result.sort((a, b) => {
-        const indexA = colleges.findIndex(c => c.Name === a.Name);
-        const indexB = colleges.findIndex(c => c.Name === b.Name);
-        return indexA - indexB;
-      });
-    } else if (collegeOptions.sortBy === 'parameter' && collegeOptions.sortParameter) {
-      // Sort by specific parameter (descending - higher values first)
-      result.sort((a, b) => {
-        const valueA = Number(a[collegeOptions.sortParameter!]) || 0;
-        const valueB = Number(b[collegeOptions.sortParameter!]) || 0;
-        return valueB - valueA;
-      });
     }
 
     return result;
@@ -126,8 +114,8 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <input
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -137,12 +125,72 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
             />
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleSelectAll}
-        >
-          {filteredColleges.every(c => selectedColleges.includes(c.Name)) ? 'Deselect All' : 'Select All'}
-        </Button>
+        
+        <div className="flex gap-2 flex-wrap">
+          <Select
+            value={collegeOptions.sortBy}
+            onValueChange={(value) => setCollegeOptions(prev => ({ 
+              ...prev, 
+              sortBy: value,
+              sortParameter: value === 'parameter' ? prev.sortParameter : undefined
+            }))}
+          >
+            <SelectTrigger className="w-[160px]">
+              <div className="flex items-center gap-2">
+                <SortAsc className="h-4 w-4" />
+                <SelectValue placeholder="Sort by" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="original">Original Order</SelectItem>
+              <SelectItem value="alphabetical">Alphabetical</SelectItem>
+              <SelectItem value="nirf">NIRF Rank</SelectItem>
+              {parameters.length > 0 && (
+                <SelectItem value="parameter">By Parameter</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+
+          {collegeOptions.sortBy === 'parameter' && parameters.length > 0 && (
+            <Select
+              value={collegeOptions.sortParameter}
+              onValueChange={(value) => setCollegeOptions(prev => ({ ...prev, sortParameter: value }))}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Select parameter" />
+              </SelectTrigger>
+              <SelectContent>
+                {parameters.map(param => (
+                  <SelectItem key={param} value={param}>{param}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select
+            value={collegeOptions.filterBy}
+            onValueChange={(value) => setCollegeOptions(prev => ({ ...prev, filterBy: value }))}
+          >
+            <SelectTrigger className="w-[160px]">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                <SelectValue placeholder="Filter" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Colleges</SelectItem>
+              <SelectItem value="selected">Selected Only</SelectItem>
+              <SelectItem value="unselected">Unselected Only</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button
+            variant="outline"
+            onClick={handleSelectAll}
+          >
+            {filteredColleges.every(c => selectedColleges.includes(c.Name)) ? 'Deselect All' : 'Select All'}
+          </Button>
+        </div>
       </div>
 
       <ScrollArea className="h-[500px] rounded-md border">
@@ -153,7 +201,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredColleges.map((college, index) => (
+              {filteredColleges.map((college) => (
                 <div
                   key={college.Name}
                   onClick={() => handleCollegeSelect(college)}
@@ -171,13 +219,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
                     )}>
                       {selectedColleges.includes(college.Name) && <Check className="h-3.5 w-3.5" />}
                     </div>
-                    <div>
-                      <div className="font-medium">{college.Name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        ID: {college['Unnamed: 0']} 
-                        {collegeOptions.sortBy === 'nirf' && ` • NIRF Rank: ${colleges.findIndex(c => c.Name === college.Name) + 1}`}
-                      </div>
-                    </div>
+                    <span>{college.Name}</span>
                   </div>
                   <Dialog>
                     <DialogTrigger asChild>
