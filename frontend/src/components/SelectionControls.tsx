@@ -51,7 +51,7 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   isLoading = false,
 }) => {
   const [collegeOptions, setCollegeOptions] = useState<SortingOptions>({
-    sortBy: 'original',
+    sortBy: 'nirf',
     filterBy: 'all',
     searchQuery: ''
   });
@@ -142,7 +142,6 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="original">Original Order</SelectItem>
               <SelectItem value="alphabetical">Alphabetical</SelectItem>
               <SelectItem value="nirf">NIRF Rank</SelectItem>
               {parameters.length > 0 && (
