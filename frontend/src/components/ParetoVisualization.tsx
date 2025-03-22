@@ -252,6 +252,39 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                 }
                 return 0;
             
+            case 'balanced':
+                // Calculate average normalized score across all available parameters
+                const paramsToConsider = availableParameters.filter(p => 
+                    // Filter out non-numeric parameters
+                    !isNaN(parseFloat(a.college[p] as string)) && 
+                    !isNaN(parseFloat(b.college[p] as string))
+                );
+                
+                if (paramsToConsider.length === 0) return 0;
+                
+                // Find max values for each parameter to normalize
+                const maxValues = {};
+                paramsToConsider.forEach(param => {
+                    maxValues[param] = Math.max(
+                        ...colleges.map(c => parseFloat(c.college[param] as string) || 0)
+                    );
+                });
+                
+                // Calculate normalized score for each college
+                const scoreA = paramsToConsider.reduce((sum, param) => {
+                    const value = parseFloat(a.college[param] as string) || 0;
+                    const normalizedValue = maxValues[param] > 0 ? value / maxValues[param] : 0;
+                    return sum + normalizedValue;
+                }, 0) / paramsToConsider.length;
+                
+                const scoreB = paramsToConsider.reduce((sum, param) => {
+                    const value = parseFloat(b.college[param] as string) || 0;
+                    const normalizedValue = maxValues[param] > 0 ? value / maxValues[param] : 0;
+                    return sum + normalizedValue;
+                }, 0) / paramsToConsider.length;
+                
+                return scoreB - scoreA; // Higher average score first
+            
             default:
                 return 0;
         }
@@ -290,6 +323,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                         <SelectItem value="nirf">NIRF Rank</SelectItem>
                         <SelectItem value="alphabetical">Alphabetical</SelectItem>
                         <SelectItem value="parameter">Parameter</SelectItem>
+                        <SelectItem value="balanced">Equal Weightage</SelectItem>
                     </SelectContent>
                 </Select>
                 
