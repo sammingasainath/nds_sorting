@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown, SortAsc } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, AlertCircle, Info } from "lucide-react";
 import { NonDominatedSortingResult } from '@/types';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { parameterInfo } from '@/lib/parameterInfo';
 
 // Types
 interface CollegeDetails {
@@ -32,6 +33,73 @@ interface ScrollControlsProps {
     canScrollLeft: boolean;
     canScrollRight: boolean;
 }
+
+// Add interface for outliers
+interface OutlierInfo {
+    collegeId: string;
+    parameter: string;
+    value: number;
+    threshold: number;
+    percentageBelowMean: number;
+}
+
+// Helper function to get parameter information with fallback
+const getParameterInfo = (paramCode: string) => {
+    // Try to get the parameter info
+    const info = parameterInfo[paramCode];
+    
+    // If not found, return a default object
+    if (!info) {
+        return {
+            fullName: paramCode,
+            description: `Parameter ${paramCode}`,
+            category: 'Unknown'
+        };
+    }
+    
+    return info;
+};
+
+// Function to detect outliers in the front
+const detectOutliers = (colleges, availableParameters): OutlierInfo[] => {
+    const outliers: OutlierInfo[] = [];
+    
+    if (colleges.length < 3) return outliers; // Need at least 3 colleges to detect outliers
+    
+    availableParameters.forEach(param => {
+        // Extract values for this parameter
+        const values = colleges.map(c => parseFloat(c.college[param] as string) || 0);
+        if (values.every(v => v === 0)) return; // Skip if all values are 0
+        
+        // Calculate statistics
+        const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+        const stdDev = Math.sqrt(
+            values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+        );
+        
+        // Define threshold for outliers (1.5 standard deviations below mean)
+        const threshold = mean - 1.5 * stdDev;
+        
+        // Find outliers
+        colleges.forEach(college => {
+            const value = parseFloat(college.college[param] as string) || 0;
+            if (value < threshold && value > 0) { // Only consider non-zero values
+                // Calculate percentage below mean
+                const percentageBelowMean = mean > 0 ? ((mean - value) / mean) * 100 : 0;
+                
+                outliers.push({
+                    collegeId: college.college['Unnamed: 0'] as string,
+                    parameter: param,
+                    value,
+                    threshold,
+                    percentageBelowMean
+                });
+            }
+        });
+    });
+    
+    return outliers;
+};
 
 // Helper Components
 const ScrollControls: React.FC<ScrollControlsProps> = ({
@@ -117,26 +185,32 @@ interface FrontBoxProps {
 // Add sort options type
 type SortOption = 'nirf' | 'alphabetical' | 'parameter' | 'balanced';
 
-// Add an interface for outliers
-interface OutlierInfo {
-    collegeId: string;
-    parameter: string;
-    value: number;
-    threshold: number;
-}
-
 const FrontBox: React.FC<FrontBoxProps> = ({
     frontNumber,
     colleges,
     onCollegeSelect,
     selectedCollegeIds,
 }) => {
-    // Add state for sorting
+    // State variables
     const [sortBy, setSortBy] = useState<SortOption>('nirf');
     const [selectedParameter, setSelectedParameter] = useState<string>('');
-    const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
-    const [topN, setTopN] = useState<number>(3);
     const [showOutliers, setShowOutliers] = useState<boolean>(true);
+    
+    // Get available parameters
+    const availableParameters = colleges.length > 0 ? Object.keys(colleges[0].college).filter(key => 
+        key !== 'Unnamed: 0' && 
+        key !== 'Name' && 
+        key !== 'NIRF 2022 Rank' && 
+        !key.startsWith('_')
+    ) : [];
+    
+    // Get outliers
+    const outliers = showOutliers ? detectOutliers(colleges, availableParameters) : [];
+    
+    // Check if a college has outliers
+    const getCollegeOutliers = (collegeId: string) => {
+        return outliers.filter(o => o.collegeId === collegeId);
+    };
 
     const handleCollegeSelect = (collegeId: string) => {
         const newSelection = selectedCollegeIds.includes(collegeId)
@@ -158,121 +232,6 @@ const FrontBox: React.FC<FrontBoxProps> = ({
 
     const isSelected = (collegeId: string) => selectedCollegeIds.includes(collegeId);
 
-    // Get all parameters from the first college to use for parameter sorting
-    const availableParameters = colleges.length > 0 ? Object.keys(colleges[0].college).filter(key => 
-        key !== 'Unnamed: 0' && 
-        key !== 'Name' && 
-        key !== 'NIRF 2022 Rank' && 
-        !key.startsWith('_')
-    ) : [];
-
-    // Function to detect outliers in the front
-    const detectOutliers = (): OutlierInfo[] => {
-        const outliers: OutlierInfo[] = [];
-        
-        if (colleges.length < 3) return outliers; // Need at least 3 colleges to detect outliers
-        
-        availableParameters.forEach(param => {
-            // Extract values for this parameter
-            const values = colleges.map(c => parseFloat(c.college[param] as string) || 0);
-            if (values.every(v => v === 0)) return; // Skip if all values are 0
-            
-            // Calculate statistics
-            const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-            const stdDev = Math.sqrt(
-                values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
-            );
-            
-            // Define threshold for outliers (2 standard deviations below mean)
-            const threshold = mean - 1.5 * stdDev;
-            
-            // Find outliers
-            colleges.forEach(college => {
-                const value = parseFloat(college.college[param] as string) || 0;
-                if (value < threshold && value > 0) { // Only consider non-zero values
-                    outliers.push({
-                        collegeId: college.college['Unnamed: 0'] as string,
-                        parameter: param,
-                        value,
-                        threshold
-                    });
-                }
-            });
-        });
-        
-        return outliers;
-    };
-
-    // Get outliers
-    const outliers = showOutliers ? detectOutliers() : [];
-
-    // Calculate balanced scores for equal weightage sorting
-    const calculateBalancedScores = () => {
-        if (selectedParameters.length === 0) return new Map<string, number>();
-        
-        const scores = new Map<string, number>();
-        
-        // First, normalize each parameter
-        const normalizedValues = new Map<string, Map<string, number>>();
-        
-        selectedParameters.forEach(param => {
-            const paramValues = new Map<string, number>();
-            
-            // Get all values for this parameter
-            const values = colleges.map(c => parseFloat(c.college[param] as string) || 0);
-            const maxValue = Math.max(...values);
-            const minValue = Math.min(...values.filter(v => v > 0)) || 0;
-            
-            // Calculate normalized score for each college
-            colleges.forEach(college => {
-                const collegeId = college.college['Unnamed: 0'] as string;
-                const value = parseFloat(college.college[param] as string) || 0;
-                
-                // Skip if value is 0 (often means missing data)
-                if (value === 0) {
-                    paramValues.set(collegeId, 0);
-                    return;
-                }
-                
-                // Normalize to 0-1 scale
-                const normalizedValue = maxValue === minValue 
-                    ? 1 
-                    : (value - minValue) / (maxValue - minValue);
-                
-                paramValues.set(collegeId, normalizedValue);
-            });
-            
-            normalizedValues.set(param, paramValues);
-        });
-        
-        // Calculate average score for each college
-        colleges.forEach(college => {
-            const collegeId = college.college['Unnamed: 0'] as string;
-            let totalScore = 0;
-            let validParamCount = 0;
-            
-            selectedParameters.forEach(param => {
-                const paramValues = normalizedValues.get(param);
-                if (paramValues) {
-                    const score = paramValues.get(collegeId) || 0;
-                    if (score > 0) {
-                        totalScore += score;
-                        validParamCount++;
-                    }
-                }
-            });
-            
-            // Calculate average score, considering only parameters with valid values
-            const avgScore = validParamCount > 0 ? totalScore / validParamCount : 0;
-            scores.set(collegeId, avgScore);
-        });
-        
-        return scores;
-    };
-
-    // Get balanced scores
-    const balancedScores = sortBy === 'balanced' ? calculateBalancedScores() : new Map<string, number>();
-
     // Sort colleges based on selected sort option
     const sortedColleges = [...colleges].sort((a, b) => {
         switch (sortBy) {
@@ -292,34 +251,10 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                 }
                 return 0;
             
-            case 'balanced':
-                const scoreA = balancedScores.get(a.college['Unnamed: 0'] as string) || 0;
-                const scoreB = balancedScores.get(b.college['Unnamed: 0'] as string) || 0;
-                return scoreB - scoreA; // Higher scores first
-            
             default:
                 return 0;
         }
     });
-
-    // For balanced sorting, limit to top N
-    const displayedColleges = sortBy === 'balanced' 
-        ? sortedColleges.slice(0, Math.min(topN, sortedColleges.length))
-        : sortedColleges;
-
-    // Toggle a parameter in the selectedParameters array
-    const toggleParameter = (param: string) => {
-        setSelectedParameters(prev => 
-            prev.includes(param) 
-                ? prev.filter(p => p !== param)
-                : [...prev, param]
-        );
-    };
-
-    // Check if a college has outliers
-    const getCollegeOutliers = (collegeId: string) => {
-        return outliers.filter(o => o.collegeId === collegeId);
-    };
 
     return (
         <div className="min-w-[350px] border rounded-lg p-4 bg-card">
@@ -345,28 +280,15 @@ const FrontBox: React.FC<FrontBoxProps> = ({
             <div className="flex items-center gap-2 mb-3 mt-1">
                 <Select
                     value={sortBy}
-                    onValueChange={(value) => {
-                        setSortBy(value as SortOption);
-                        if (value === 'balanced' && selectedParameters.length === 0) {
-                            // Auto-select first few parameters if none selected
-                            setSelectedParameters(availableParameters.slice(0, 3));
-                        }
-                    }}
+                    onValueChange={(value) => setSortBy(value as SortOption)}
                 >
                     <SelectTrigger className="h-8 text-xs">
-                        <div className="flex items-center gap-1">
-                            {sortBy === 'nirf' && <SortAsc className="h-3 w-3" />}
-                            {sortBy === 'alphabetical' && <ArrowUpDown className="h-3 w-3" />}
-                            {sortBy === 'parameter' && <ArrowDown className="h-3 w-3" />}
-                            {sortBy === 'balanced' && <CheckSquare className="h-3 w-3" />}
-                            <SelectValue placeholder="Sort by" />
-                        </div>
+                        <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="nirf">NIRF Rank</SelectItem>
                         <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                        <SelectItem value="parameter">Single Parameter</SelectItem>
-                        <SelectItem value="balanced">Equal Weightage</SelectItem>
+                        <SelectItem value="parameter">Parameter</SelectItem>
                     </SelectContent>
                 </Select>
                 
@@ -388,7 +310,7 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                         </SelectContent>
                     </Select>
                 )}
-
+                
                 {/* Show outlier toggle */}
                 <TooltipProvider>
                     <Tooltip>
@@ -417,45 +339,8 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                 </TooltipProvider>
             </div>
 
-            {/* Equal Weightage Controls */}
-            {sortBy === 'balanced' && (
-                <div className="mb-3 space-y-2">
-                    <div className="flex flex-wrap gap-1">
-                        {availableParameters.map(param => (
-                            <Button
-                                key={param}
-                                variant={selectedParameters.includes(param) ? "default" : "outline"}
-                                size="sm"
-                                className="text-xs h-7"
-                                onClick={() => toggleParameter(param)}
-                            >
-                                {param}
-                            </Button>
-                        ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Top:</span>
-                        <Select
-                            value={topN.toString()}
-                            onValueChange={(value) => setTopN(parseInt(value))}
-                        >
-                            <SelectTrigger className="h-8 text-xs w-[80px]">
-                                <SelectValue placeholder="Top N" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {[3, 5, 10, 15, 20].map(n => (
-                                    <SelectItem key={n} value={n.toString()}>
-                                        {n}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-            )}
-
             <div className="space-y-2">
-                {displayedColleges.map((result, index) => {
+                {sortedColleges.map((result, index) => {
                     const collegeId = result.college['Unnamed: 0'] as string;
                     const collegeOutliers = getCollegeOutliers(collegeId);
                     
@@ -504,13 +389,6 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                 {selectedParameter}: {result.college[selectedParameter] || 'N/A'}
                                             </span>
                                         )}
-
-                                        {/* Show balanced score when using equal weightage */}
-                                        {sortBy === 'balanced' && (
-                                            <span className="font-medium text-primary">
-                                                Score: {(balancedScores.get(collegeId) || 0).toFixed(2)}
-                                            </span>
-                                        )}
                                         
                                         {/* Show outlier indicators */}
                                         {collegeOutliers.length > 0 && showOutliers && (
@@ -518,24 +396,51 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <span className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                            <span>Outlier:</span>
-                                                            <span className="font-medium">{collegeOutliers.map(o => o.parameter.split(' ')[0]).join(', ')}</span>
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            <span>Outlier in:</span>
+                                                            <span className="font-medium">{collegeOutliers.map(o => o.parameter).join(', ')}</span>
                                                         </span>
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="max-w-[300px]">
-                                                        <div className="text-xs space-y-1">
-                                                            <p className="font-semibold">Low values in:</p>
-                                                            {collegeOutliers.map((o, i) => (
-                                                                <div key={i} className="flex justify-between items-center gap-2 border-b border-muted pb-1 last:border-0">
-                                                                    <span className="font-medium">{o.parameter}:</span> 
-                                                                    <div>
-                                                                        <span className="text-yellow-500">{o.value.toFixed(2)}</span>
-                                                                        <span className="text-muted-foreground ml-1">
-                                                                            (below: {o.threshold.toFixed(2)})
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                    <TooltipContent className="max-w-[400px] p-4">
+                                                        <div className="text-sm space-y-4">
+                                                            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                                                                <AlertCircle className="h-4 w-4" />
+                                                                <p className="font-semibold">Parameter Values Below Group Average</p>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                The following parameters have values significantly lower than other colleges in this group.
+                                                                This is a statistical observation and doesn't necessarily indicate quality issues.
+                                                            </p>
+                                                            <div className="space-y-3 pt-2">
+                                                                {collegeOutliers.map((o, i) => {
+                                                                    const paramInfo = getParameterInfo(o.parameter);
+                                                                    return (
+                                                                        <div key={i} className="space-y-1 pb-3 border-b border-muted last:border-0 last:pb-0">
+                                                                            <div className="flex justify-between items-start">
+                                                                                <div className="font-medium">{paramInfo.fullName || o.parameter}</div>
+                                                                                <div className="text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                                                    {o.percentageBelowMean.toFixed(0)}% below average
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-xs text-muted-foreground">
+                                                                                <span className="inline-block mr-1">{paramInfo.category}</span>
+                                                                                {paramInfo.weight && <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-1 rounded">Weight: {paramInfo.weight}%</span>}
+                                                                            </div>
+                                                                            <div className="flex justify-between items-center text-xs mt-1">
+                                                                                <span>College value: <strong>{o.value.toFixed(2)}</strong></span>
+                                                                                <span>Group average: <strong>{(o.value + o.percentageBelowMean * o.value / 100).toFixed(2)}</strong></span>
+                                                                            </div>
+                                                                            <div className="text-xs mt-1">{paramInfo.description}</div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <div className="pt-2 text-xs text-muted-foreground border-t border-muted">
+                                                                <p className="flex items-center gap-1">
+                                                                    <Info className="h-3 w-3" />
+                                                                    These parameters may require attention if they align with your priorities, or may be less relevant depending on your specific interests.
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </TooltipContent>
                                                 </Tooltip>
