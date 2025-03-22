@@ -6,6 +6,9 @@ import { useCollegeHistory } from '@/hooks/useCollegeHistory';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ParameterSelector } from '@/components/ParameterSelector';
+import { parameterInfo } from '@/lib/parameterInfo';
 
 export const ComparisonPage: React.FC = () => {
   const {
@@ -167,18 +170,50 @@ export const ComparisonPage: React.FC = () => {
         </div>
       </div>
 
-      <SelectionControls
-        colleges={colleges}
-        parameters={parameters}
-        selectedColleges={selectedColleges}
-        selectedParameters={selectedParameters}
-        onCollegesChange={setSelectedColleges}
-        onParametersChange={setSelectedParameters}
-        isLoading={loading}
-        iterationId={currentIterationId}
-        isSubsequentIteration={isSubsequentIteration}
-        key={selectionControlsKey}
-      />
+      {/* Two-column layout for college and parameter selection */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* College selection - takes 2/3 of the space */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Select Colleges</CardTitle>
+              <CardDescription>Choose the colleges you want to compare</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SelectionControls
+                colleges={colleges}
+                parameters={parameters}
+                selectedColleges={selectedColleges}
+                selectedParameters={selectedParameters}
+                onCollegesChange={setSelectedColleges}
+                onParametersChange={setSelectedParameters}
+                isLoading={loading}
+                iterationId={currentIterationId}
+                isSubsequentIteration={isSubsequentIteration}
+                key={selectionControlsKey}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Parameter selection - takes 1/3 of the space */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Select Parameters</CardTitle>
+              <CardDescription>Choose the parameters for comparison</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ParameterSelector
+                parameters={parameters}
+                selectedParameters={selectedParameters}
+                parameterInfo={parameterInfo}
+                onParametersChange={setSelectedParameters}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
       
       {selectedColleges.length > 0 && selectedParameters.length > 0 && (
         <CollegeComparison
@@ -187,6 +222,22 @@ export const ComparisonPage: React.FC = () => {
           selectedParameters={selectedParameters}
           iterationId={currentIterationId}
         />
+      )}
+
+      {/* Show helpful message if either colleges or parameters are not selected */}
+      {(selectedColleges.length === 0 || selectedParameters.length === 0) && (
+        <Card className="bg-muted/40">
+          <CardContent className="pt-6">
+            <div className="text-center text-muted-foreground">
+              {selectedColleges.length === 0 && (
+                <p>Please select colleges to compare</p>
+              )}
+              {selectedColleges.length > 0 && selectedParameters.length === 0 && (
+                <p>Please select parameters for comparison</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
