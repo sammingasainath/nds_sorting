@@ -18,7 +18,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ParameterInfoCard } from './ParameterInfoCard';
 
 interface ParameterInfo {
   fullName?: string;
@@ -26,8 +25,6 @@ interface ParameterInfo {
   category?: string;
   weight?: string;
   formula?: string;
-  examples?: string;
-  importance?: string;
 }
 
 // Parameter category colors
@@ -127,147 +124,134 @@ export const ParameterSelector: React.FC<ParameterSelectorProps> = ({
   };
 
   return (
-    <TooltipProvider>
-      <Card className="w-full bg-card/50 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl font-semibold flex items-center justify-between">
-            <span>Parameters</span>
-            <Badge variant="outline" className="ml-2">
-              {selectedParameters.length} selected
-            </Badge>
-          </CardTitle>
-          <CardDescription>
-            Choose the parameters for college comparison
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Search and filter */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  placeholder="Search parameters..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div className="flex-shrink-0">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={categoryFilter ? "default" : "outline"}
-                      size="icon"
-                      onClick={() => setCategoryFilter(null)}
-                    >
-                      <Filter className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Clear category filter</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+    <Card className="w-full">
+      <CardHeader className="space-y-1">
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Parameters</CardTitle>
+            <CardDescription>
+              Choose parameters that matter most to you for comparing colleges
+            </CardDescription>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Info className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <p>Parameters are criteria used to evaluate and compare colleges. Each parameter has a specific weight in the NIRF ranking system.</p>
+                <p className="mt-2">Click on any parameter to select it for your comparison.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <Input 
+                type="text"
+                placeholder="Search parameters..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+              <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+
+          <ScrollArea className="h-60 rounded-md">
+            <div className="flex gap-1.5 pb-2 overflow-x-auto">
+              <Badge 
+                variant={categoryFilter === null ? "default" : "outline"}
+                className="cursor-pointer whitespace-nowrap"
+                onClick={() => setCategoryFilter(null)}
+              >
+                All Categories
+              </Badge>
+              {Object.keys(parametersByCategory).map(category => (
+                <Badge 
+                  key={category}
+                  variant={categoryFilter === category ? "default" : "outline"}
+                  className="cursor-pointer whitespace-nowrap"
+                  onClick={() => setCategoryFilter(category === categoryFilter ? null : category)}
+                >
+                  <div className={`mr-1.5 h-2 w-2 rounded-full ${categoryColors[category]}`} />
+                  {category.split(' ')[0]}
+                </Badge>
+              ))}
             </div>
 
-            {/* Category chips */}
-            <ScrollArea className="whitespace-nowrap pb-2">
-              <div className="flex gap-2">
-                {Object.keys(parametersByCategory).map(category => (
-                  <Badge
-                    key={category}
-                    variant={categoryFilter === category ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setCategoryFilter(categoryFilter === category ? null : category)}
-                  >
-                    <div className={`mr-1.5 h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
-                    {category.split(' ')[0]}
-                  </Badge>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Parameters list */}
-            <ScrollArea className="h-[350px]">
-              <Accordion type="multiple" className="w-full">
-                {Object.entries(parametersByCategory).map(([category, params]) => {
+            <Accordion type="multiple" className="w-full">
+              {Object.entries(parametersByCategory)
+                .filter(([category]) => !categoryFilter || category === categoryFilter)
+                .map(([category, params]) => {
                   // Filter parameters in this category
-                  const visibleParams = params.filter(param => filteredParameters.includes(param));
-                  if (visibleParams.length === 0) return null;
+                  const categoryParamsFiltered = params.filter(param => filteredParameters.includes(param));
+                  if (categoryParamsFiltered.length === 0) return null;
                   
-                  const allSelected = visibleParams.every(param => selectedParameters.includes(param));
-                  const someSelected = visibleParams.some(param => selectedParameters.includes(param));
+                  const allSelected = categoryParamsFiltered.every(param => selectedParameters.includes(param));
+                  const someSelected = categoryParamsFiltered.some(param => selectedParameters.includes(param));
                   
                   return (
-                    <AccordionItem key={category} value={category}>
-                      <AccordionTrigger className="hover:bg-muted/50 px-3 rounded-md">
-                        <div className="flex items-center gap-3 w-full">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
+                    <AccordionItem key={category} value={category} className="border-b">
+                      <AccordionTrigger className="hover:bg-accent hover:text-accent-foreground rounded-md px-2">
+                        <div className="flex items-center gap-2 w-full">
+                          <div className={`h-2 w-2 rounded-full ${categoryColors[category]}`} />
+                          <span className="font-medium text-sm flex-grow">{category}</span>
+                          <div 
+                            className={cn(
+                              "flex h-4 w-4 items-center justify-center rounded-sm border mr-2",
+                              allSelected ? "bg-primary border-primary text-primary-foreground" :
+                              someSelected ? "bg-primary/30 border-primary/30" :
+                              "border-muted-foreground"
+                            )}
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleAllInCategory(category);
                             }}
                           >
-                            <div className={cn(
-                              "h-4 w-4 border rounded-sm flex items-center justify-center",
-                              allSelected
-                                ? "bg-primary border-primary text-primary-foreground"
-                                : someSelected
-                                  ? "bg-primary/30 border-primary/30"
-                                  : "border-muted-foreground"
-                            )}>
-                              {allSelected && <Check className="h-3 w-3" />}
-                            </div>
-                          </Button>
-                          <div className="flex items-center gap-2">
-                            <div className={`h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
-                            <span>{category}</span>
+                            {allSelected && <Check className="h-3 w-3" />}
                           </div>
-                          <Badge variant="outline" className="ml-auto">
-                            {visibleParams.filter(p => selectedParameters.includes(p)).length}/{visibleParams.length}
-                          </Badge>
                         </div>
                       </AccordionTrigger>
-                      <AccordionContent className="px-2">
-                        <div className="space-y-1 py-1">
-                          {visibleParams.map(param => {
+                      <AccordionContent>
+                        <div className="space-y-1 pl-3 pt-1">
+                          {categoryParamsFiltered.map(param => {
                             const info = parameterInfo[param];
                             return (
-                              <div
+                              <div 
                                 key={param}
-                                className={cn(
-                                  "flex items-center gap-3 px-4 py-2 rounded-md hover:bg-muted/50 cursor-pointer",
-                                  selectedParameters.includes(param) && "bg-muted/30"
-                                )}
+                                className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer"
                                 onClick={() => toggleParameter(param)}
                               >
-                                <div className={cn(
-                                  "h-4 w-4 border rounded-sm flex items-center justify-center",
-                                  selectedParameters.includes(param)
-                                    ? "bg-primary border-primary"
-                                    : "border-muted-foreground"
-                                )}>
-                                  {selectedParameters.includes(param) && <Check className="h-3 w-3 text-primary-foreground" />}
-                                </div>
-                                <div className="flex flex-col flex-1">
-                                  <div className="font-medium">{info?.fullName || param}</div>
-                                  {info?.description && (
-                                    <div className="text-xs text-muted-foreground line-clamp-1">
-                                      {info.description}
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className={cn(
+                                      "flex h-4 w-4 items-center justify-center rounded-sm border",
+                                      selectedParameters.includes(param) 
+                                        ? "bg-primary border-primary text-primary-foreground" 
+                                        : "border-muted-foreground"
+                                    )}
+                                  >
+                                    {selectedParameters.includes(param) && <Check className="h-3 w-3" />}
+                                  </div>
+                                  <div className="ml-2">
+                                    <div className="flex gap-2 items-center">
+                                      <span className="font-medium text-sm">{info?.fullName || param}</span>
+                                      <Badge variant="outline" className="text-xs">{param}</Badge>
+                                      {info?.weight && (
+                                        <Badge variant="secondary" className="text-xs">Weight: {info.weight}</Badge>
+                                      )}
                                     </div>
-                                  )}
+                                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                      {info?.description || "No description available"}
+                                    </p>
+                                  </div>
                                 </div>
-                                <ParameterInfoCard
-                                  name={info?.fullName || param}
-                                  code={param}
-                                  description={info?.description || "No description available"}
-                                  examples={info?.examples}
-                                  importance={info?.importance || info?.weight ? `Weight: ${info.weight}` : undefined}
-                                  className="ml-auto"
-                                />
                               </div>
                             );
                           })}
@@ -276,11 +260,34 @@ export const ParameterSelector: React.FC<ParameterSelectorProps> = ({
                     </AccordionItem>
                   );
                 })}
-              </Accordion>
-            </ScrollArea>
+            </Accordion>
+          </ScrollArea>
+
+          <div className="flex justify-between pt-2">
+            <p className="text-sm text-muted-foreground">
+              {selectedParameters.length} of {parameters.length} parameters selected
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onParametersChange([])}
+                disabled={selectedParameters.length === 0}
+              >
+                Clear All
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => onParametersChange(parameters)}
+                disabled={selectedParameters.length === parameters.length}
+              >
+                Select All
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </TooltipProvider>
+        </div>
+      </CardContent>
+    </Card>
   );
 }; 
