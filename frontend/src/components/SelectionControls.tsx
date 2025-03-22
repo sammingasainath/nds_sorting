@@ -39,8 +39,6 @@ interface SelectionControlsProps {
   onCollegesChange: (colleges: string[]) => void;
   onParametersChange: (parameters: string[]) => void;
   isLoading?: boolean;
-  searchQuery?: string;
-  sortBy?: string;
 }
 
 export const SelectionControls: React.FC<SelectionControlsProps> = ({
@@ -51,13 +49,11 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
   onCollegesChange,
   onParametersChange,
   isLoading = false,
-  searchQuery = '',
-  sortBy = 'nirf',
 }) => {
   const [collegeOptions, setCollegeOptions] = useState<SortingOptions>({
-    sortBy: sortBy,
+    sortBy: 'nirf',
     filterBy: 'all',
-    searchQuery: searchQuery
+    searchQuery: ''
   });
 
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
@@ -150,15 +146,6 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
       }));
     }
   }, [selectedParameters]);
-
-  // Update internal state when props change
-  useEffect(() => {
-    setCollegeOptions(prev => ({
-      ...prev,
-      sortBy: sortBy,
-      searchQuery: searchQuery
-    }));
-  }, [sortBy, searchQuery]);
 
   if (isLoading) {
     return (

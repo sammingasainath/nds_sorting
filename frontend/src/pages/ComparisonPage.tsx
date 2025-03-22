@@ -186,14 +186,6 @@ export const ComparisonPage: React.FC = () => {
               ({availableColleges.length} colleges available)
             </div>
           )}
-          {selectedColleges.length > 0 && (
-            <Button 
-              onClick={handleNewIteration}
-              variant="outline"
-            >
-              Start New Iteration
-            </Button>
-          )}
         </div>
       </div>
 
@@ -205,66 +197,31 @@ export const ComparisonPage: React.FC = () => {
             <CardDescription>Choose the colleges you want to compare</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap items-center gap-4 mb-4">
-              <div className="flex-1 min-w-[200px]">
-                <div className="relative">
-                  <Input
-                    className="w-full pl-8"
-                    placeholder="Search colleges..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => setSortBy(value)}
-                >
-                  <SelectTrigger className="w-[160px]">
-                    <div className="flex items-center gap-2">
-                      <SortAsc className="h-4 w-4" />
-                      <SelectValue placeholder="Sort by" />
+            {/* Parameter selection dropdown styled like in the explore page */}
+            <div className="mb-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-[220px] justify-between">
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-sm">Select Parameters</span>
+                      <span className="text-xs text-muted-foreground">
+                        {selectedParameters.length === 0 ? 'No parameters selected' : `${selectedParameters.length} selected`}
+                      </span>
                     </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                    <SelectItem value="nirf">NIRF Rank</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                {/* Parameter selection dropdown styled like in the explore page */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-[220px] justify-between">
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium text-sm">Select Parameters</span>
-                        <span className="text-xs text-muted-foreground">
-                          {selectedParameters.length === 0 ? 'No parameters selected' : `${selectedParameters.length} selected`}
-                        </span>
-                      </div>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="p-0 w-[350px]" align="end">
-                    <ParameterSelector
-                      parameters={parameters}
-                      selectedParameters={selectedParameters}
-                      parameterInfo={parameterInfo}
-                      onParametersChange={setSelectedParameters}
-                    />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button
-                  variant="outline"
-                  onClick={handleSelectAll}
-                >
-                  {selectedColleges.length === colleges.length ? 'Deselect All' : 'Select All'}
-                </Button>
-              </div>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="p-0 w-[350px]" align="end">
+                  <ParameterSelector
+                    parameters={parameters}
+                    selectedParameters={selectedParameters}
+                    parameterInfo={parameterInfo}
+                    onParametersChange={setSelectedParameters}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+            
             <SelectionControls
               colleges={colleges}
               parameters={parameters}
@@ -273,8 +230,6 @@ export const ComparisonPage: React.FC = () => {
               onCollegesChange={setSelectedColleges}
               onParametersChange={setSelectedParameters}
               isLoading={loading}
-              searchQuery={searchQuery}
-              sortBy={sortBy}
               key={selectionControlsKey}
             />
           </CardContent>
