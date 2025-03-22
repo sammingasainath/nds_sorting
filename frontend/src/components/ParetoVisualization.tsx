@@ -327,7 +327,13 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                 {showOutliers ? `Outliers (${outliers.length})` : 'Outliers'}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-[300px] p-3">
+                        <TooltipContent 
+                            className="max-w-[300px] p-3"
+                            side="bottom"
+                            align="center"
+                            sideOffset={5}
+                            avoidCollisions={true}
+                        >
                             <p className="text-sm">Shows colleges with unusually low parameter values (1.5 standard deviations below group average)</p>
                             {outliers.length > 0 && showOutliers && (
                                 <div className="mt-1 pt-1 border-t">
@@ -401,7 +407,14 @@ const FrontBox: React.FC<FrontBoxProps> = ({
                                                             <span className="font-medium">{collegeOutliers.map(o => o.parameter).join(', ')}</span>
                                                         </span>
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="max-w-[400px] p-4">
+                                                    <TooltipContent 
+                                                        className="max-w-[400px] p-4" 
+                                                        side="right" 
+                                                        align="start"
+                                                        sideOffset={5}
+                                                        alignOffset={-10}
+                                                        avoidCollisions={true}
+                                                    >
                                                         <div className="text-sm space-y-4">
                                                             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                                                                 <AlertCircle className="h-4 w-4" />
