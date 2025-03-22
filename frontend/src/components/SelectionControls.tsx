@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { College } from '@/types';
 import { Check, ArrowUpRight, SortAsc, Filter } from "lucide-react";
@@ -65,7 +65,8 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
     if (collegeOptions.searchQuery) {
       const search = collegeOptions.searchQuery.toLowerCase();
       result = result.filter(college => 
-        college.Name.toLowerCase().includes(search)
+        college.Name.toLowerCase().includes(search) || 
+        (college['Unnamed: 0'] && college['Unnamed: 0'].toString().toLowerCase().includes(search))
       );
     }
 
@@ -77,10 +78,33 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
 
     if (collegeOptions.sortBy === 'alphabetical') {
       result.sort((a, b) => a.Name.localeCompare(b.Name));
+    } else if (collegeOptions.sortBy === 'parameter' && collegeOptions.sortParameter) {
+      // Sort by selected parameter
+      result.sort((a, b) => {
+        const valueA = a[collegeOptions.sortParameter as keyof College];
+        const valueB = b[collegeOptions.sortParameter as keyof College];
+        
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+          return valueB - valueA; // Higher values first
+        }
+        return 0;
+      });
+    } else if (collegeOptions.sortBy === 'singleParameter' && selectedParameters.length === 1) {
+      // Sort by the only selected parameter
+      const param = selectedParameters[0];
+      result.sort((a, b) => {
+        const valueA = a[param as keyof College];
+        const valueB = b[param as keyof College];
+        
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+          return valueB - valueA; // Higher values first
+        }
+        return 0;
+      });
     }
 
     return result;
-  }, [colleges, collegeOptions, selectedColleges]);
+  }, [colleges, collegeOptions, selectedColleges, selectedParameters]);
 
   // Toggle college selection
   const handleCollegeSelect = useCallback((college: College) => {
@@ -103,6 +127,25 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
       onCollegesChange([...new Set([...selectedColleges, ...allFilteredCollegeNames])]);
     }
   }, [filteredColleges, selectedColleges, onCollegesChange]);
+
+  // Update sort options based on selected parameters
+  useEffect(() => {
+    if (selectedParameters.length === 1) {
+      // If exactly one parameter is selected, set it as the sort parameter
+      setCollegeOptions(prev => ({
+        ...prev,
+        sortBy: 'singleParameter',
+        sortParameter: selectedParameters[0]
+      }));
+    } else if (collegeOptions.sortBy === 'singleParameter') {
+      // If was sorted by single parameter but now multiple are selected, switch to NIRF rank
+      setCollegeOptions(prev => ({
+        ...prev,
+        sortBy: 'nirf',
+        sortParameter: undefined
+      }));
+    }
+  }, [selectedParameters]);
 
   if (isLoading) {
     return (
@@ -144,8 +187,12 @@ export const SelectionControls: React.FC<SelectionControlsProps> = ({
             <SelectContent>
               <SelectItem value="alphabetical">Alphabetical</SelectItem>
               <SelectItem value="nirf">NIRF Rank</SelectItem>
-              {parameters.length > 0 && (
-                <SelectItem value="parameter">By Parameter</SelectItem>
+              {selectedParameters.length === 1 ? (
+                <SelectItem value="singleParameter">{selectedParameters[0]}</SelectItem>
+              ) : (
+                parameters.length > 0 && (
+                  <SelectItem value="parameter">By Parameter</SelectItem>
+                )
               )}
             </SelectContent>
           </Select>
