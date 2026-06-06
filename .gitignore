@@ -46,4 +46,9 @@ var/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Local runtime
+backend/.venv/
+*.log
+.vercel 
